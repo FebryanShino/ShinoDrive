@@ -1,0 +1,21 @@
+{
+  "editor.tabSize": 2,
+  "tabWidth": 2,
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "prettier.tabWidth": 2,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[tsx]": { "editor.tabWidth": 2 },
+  "[json]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "plugins": ["prettier-plugin-organize-imports"]
+}

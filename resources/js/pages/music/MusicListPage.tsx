@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMediaSession } from "@/hooks/use-media-session";
 import MasterLayout from "@/layout/master-layout";
 import { Track } from "@/types/music";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSound from "use-sound";
 
 interface IMusicListPageProps extends React.ComponentPropsWithoutRef<"div"> {
@@ -12,9 +13,18 @@ interface IMusicListPageProps extends React.ComponentPropsWithoutRef<"div"> {
 export default function MusicListPage(props: IMusicListPageProps) {
   const [currentSong, setCurrentSong] = useState<Track>(props.tracks[0]);
   const [currentTime, setCurrentTime] = useState(0);
+  const prevSoundRef = useRef<any>(null);
 
-  const [play, { sound, stop }] = useSound(currentSong.track_path, {
+  const [play, { sound, stop, pause }] = useSound(currentSong.track_path, {
+    onend: () => {
+      stop();
+      setCurrentSong(
+        props.tracks[Math.floor(Math.random() * props.tracks.length)],
+      );
+    },
+    id: "main",
     volume: 1,
+
     interrupt: true,
   });
 
@@ -34,11 +44,32 @@ export default function MusicListPage(props: IMusicListPageProps) {
     return () => clearInterval(interval);
   }, [sound]);
 
+  useEffect(() => {
+    if (prevSoundRef.current) {
+      prevSoundRef.current.stop();
+    }
+
+    // Save current sound instance
+    if (sound) {
+      prevSoundRef.current = sound;
+      play();
+    }
+  }, [currentSong, sound]);
+
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(e.target.value);
     if (sound) sound.seek(newTime);
     setCurrentTime(newTime);
   };
+
+  useMediaSession({
+    title: currentSong.title,
+    artwork: currentSong.cover,
+    onNext: () => false,
+    onPause: () => pause(),
+    onPlay: () => play(),
+    onPrevious: () => console.log("boom"),
+  });
   return (
     <MasterLayout>
       <div className="h-[10rem] w-full flex gap-5 fixed z-10 bg-white p-3 bottom-0">

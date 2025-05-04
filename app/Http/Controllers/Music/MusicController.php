@@ -20,6 +20,7 @@ class MusicController extends Controller
             'tracks' => Track::with(['album', 'artist'])->orderBy('title')->get()
         ]);
     }
+
     public function upload(Request $request)
     {
         $files = $request->file('files');
@@ -28,23 +29,26 @@ class MusicController extends Controller
 
             $track_information = $this->getTrackInformation($file);
 
-            if (Track::where('title', $track_information['track_title'])->first()) continue;
+            if (Track::where('title', $track_information['track_title'])->whereHas(
+                'artist',
+                function ($q) use ($track_information) {
+                    $q->where('name', $track_information['artist_name']);
+                }
+            )->first()) continue;
 
             $artist = Artist::where('name', $track_information['artist_name'])->first() ?? Artist::create(['name' => $track_information['artist_name']]);
             $album = $track_information['album_title'] ?
                 (Album::where('title', $track_information['album_title'])->first() ?? Album::create(['title' => $track_information['album_title'], 'artist_id' => $artist->id]))
                 : Album::where('title', 'Unknown')->first();
 
-
-
-
+            $cleaned_album_title = str_replace("/", "-", $album->title);
             $cover_path = null;
             if ($track_information['image_data']) {
-                Storage::disk('public')->put("musics/covers/{$track_information['image_filename']}", $track_information['image_data']);
-                $cover_path = Storage::url("musics/covers/{$track_information['image_filename']}");
+                Storage::disk('public')->put("musics/covers/{$cleaned_album_title}/{$track_information['image_filename']}", $track_information['image_data']);
+                $cover_path = Storage::url("musics/covers/{$cleaned_album_title}/{$track_information['image_filename']}");
             }
 
-            $track_path = $file->storeAs("musics/tracks", $file->getClientOriginalName(), 'public');
+            $track_path = $file->storeAs("musics/tracks/{$cleaned_album_title}", $file->getClientOriginalName(), 'public');
 
 
             $track = Track::create([
@@ -54,12 +58,13 @@ class MusicController extends Controller
                 'track_number' => $track_information['track_tracknumber'],
                 'disk_number' => $track_information['track_discnumber'],
                 'cover' => $cover_path,
-                'track_path' => Storage::url($track_path)
+                'track_path' => Storage::url($track_path),
+                'track_filename' => $file->getClientOriginalName()
             ]);
         }
 
 
-        return;
+        return back();
     }
 
     private function getTrackInformation($file)
@@ -81,7 +86,7 @@ class MusicController extends Controller
         if (!empty($info['id3v2']['APIC'][0]['data']) || !empty($info['comments']['picture'][0]['data'])) {
             $image_data = $info['id3v2']['APIC'][0]['data'] ?? $info['comments']['picture'][0]['data'];
             $extension = explode('/', $info['id3v2']['APIC'][0]['image_mime'] ?? $info['comments']['picture'][0]['image_mime'])[1];
-            $image_filename =  $track_title . '.' . $extension;
+            $image_filename =  $file->getClientOriginalName() . '.' . $extension;
         }
 
         return [

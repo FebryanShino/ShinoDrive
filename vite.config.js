@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   server: {
-    host: "192.168.1.7",
+    host: "192.168.1.10",
     watch: {
       ignored: ["**/database/*.db", "**/database/database.sqlite"],
     },

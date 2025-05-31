@@ -9,6 +9,7 @@ export interface Track {
   genre_id?: string;
   album?: Album;
   artist?: Artist;
+  lyrics: Lyric[];
   track_path: string;
 }
 
@@ -26,4 +27,11 @@ export interface Artist {
   description?: string;
   track: Track[];
   album: Album[];
+}
+
+export interface Lyric {
+  id: string;
+  text: string;
+  timestamp: number;
+  track_id: string;
 }

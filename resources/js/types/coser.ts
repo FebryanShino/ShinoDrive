@@ -43,4 +43,5 @@ export interface PhotoSetItemInterface {
   tags?: Tag[];
   coser?: CoserInterface;
   photo_set: PhotoSetInterface;
+  compressed?: string;
 }

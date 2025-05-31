@@ -39,8 +39,12 @@ Route::get('/', function () {
     return Inertia::render('Homepage');
 })->name('homepage');
 
-Route::get('/music', [MusicController::class, 'index']);
+Route::get('/music/track', [MusicController::class, 'index']);
+Route::get('/music/track/{track}/lyrics', [MusicController::class, 'getLyrics'])->name('lyrics.index');
 Route::post('/upload', [MusicController::class, 'upload'])->name('upload');
+Route::post('/lyrics', [MusicController::class, 'addLyric'])->name('lyrics.add');
+Route::post('/lyrics/{id}', [MusicController::class, 'updateLyric'])->name('lyrics.update');
+Route::get('/idk', [MusicController::class, 'album']);
 
 
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import MasterLayout from "@/layout/master-layout";
 import { Tag } from "@/types";
 import { PhotoSetInterface, PhotoSetItemInterface } from "@/types/coser";
-import { Link } from "@inertiajs/react";
+import { Link, WhenVisible } from "@inertiajs/react";
 import { Flex } from "antd";
 import { PlusIcon } from "lucide-react";
 import React from "react";
@@ -62,23 +62,27 @@ export default function CoserPhotoSetDetailPage(
             </Button>
           </Link>
         </Flex>
+        <Link href={`${props.photo_set.id}/video`}>
+          <Button>Videos</Button>
+        </Link>
         <h1>Potrait Image</h1>
         <ResponsiveGridWrapper minSize="20rem">
           {potraitImages &&
             potraitImages.map((item) => (
-              <PhotoSetItemImage photo_set_item={item} tags={props.tags} />
+              <WhenVisible data={item.path} fallback={<div>Loading...</div>}>
+                <PhotoSetItemImage photo_set_item={item} tags={props.tags} />
+              </WhenVisible>
             ))}
         </ResponsiveGridWrapper>
         <h1>Landscape Image</h1>
-        <ResponsiveGridWrapper minSize="25rem">
+        <ResponsiveGridWrapper minSize="20rem">
           {landscapeImages &&
             landscapeImages.map((item) => (
-              <PhotoSetItemImage photo_set_item={item} tags={props.tags} />
+              <WhenVisible data={item.path} fallback={<div>Loading...</div>}>
+                <PhotoSetItemImage photo_set_item={item} tags={props.tags} />
+              </WhenVisible>
             ))}
         </ResponsiveGridWrapper>
-        <Link href={`${props.photo_set.id}/video`}>
-          <Button>Videos</Button>
-        </Link>
       </ContentWrapper>
     </MasterLayout>
   );

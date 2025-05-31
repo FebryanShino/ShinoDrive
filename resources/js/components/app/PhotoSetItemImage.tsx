@@ -28,7 +28,7 @@ export default function PhotoSetItemImage(props: PhotoSetItemImageProps) {
       style={{
         backgroundImage: `url("/${encodeURIComponent(cleanUrl(props.photo_set_item.path))}")`,
         aspectRatio:
-          props.photo_set_item.width <= props.photo_set_item.height
+          props.photo_set_item.width < props.photo_set_item.height
             ? 2 / 3
             : 16 / 9,
       }}

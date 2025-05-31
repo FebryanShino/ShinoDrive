@@ -25,8 +25,9 @@ class CoserImageController extends Controller
             }
         }
 
+        // return $photo_set_items->paginate()->withQueryString();
         return Inertia::render('cosplay/CoserBrowserPage', [
-            'photo_set_items' => $photo_set_items->paginate()->withQueryString(),
+            'photo_set_items' => $photo_set_items->paginate(10)->withQueryString(),
             'tags' => Tag::all()
         ]);
     }

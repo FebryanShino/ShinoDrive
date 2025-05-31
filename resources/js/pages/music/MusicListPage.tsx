@@ -1,147 +1,110 @@
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useMediaSession } from "@/hooks/use-media-session";
-import MasterLayout from "@/layout/master-layout";
+import MusicPlayer, { MusicPlayerHandle } from "@/components/app/MusicPlayer";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { Track } from "@/types/music";
-import { useEffect, useRef, useState } from "react";
-import useSound from "use-sound";
+import { PlayIcon } from "lucide-react";
+import { type ChangeEvent, useRef, useState } from "react";
 
 interface IMusicListPageProps extends React.ComponentPropsWithoutRef<"div"> {
   tracks: Track[];
 }
 
 export default function MusicListPage(props: IMusicListPageProps) {
-  const [currentSong, setCurrentSong] = useState<Track>(props.tracks[0]);
-  const [currentTime, setCurrentTime] = useState(0);
-  const prevSoundRef = useRef<any>(null);
+  const musicPlayerRef = useRef<MusicPlayerHandle>(null);
+  const [currentTrack, setCurrentTrack] = useState<Track>();
+  const [isMusicPlayerFullscreen, setIsMusicPlayerFullscreen] = useState(false);
+  const [filteredTracks, setFilteredTracks] = useState<Track[]>(props.tracks);
 
-  const [play, { sound, stop, pause }] = useSound(currentSong.track_path, {
-    onend: () => {
-      stop();
-      setCurrentSong(
-        props.tracks[Math.floor(Math.random() * props.tracks.length)],
-      );
-    },
-    id: "main",
-    volume: 1,
-
-    interrupt: true,
-  });
-
-  function convertSecondsToTimeString(time: number = 0): string {
-    const addZero = (num: string) => (num.length > 1 ? num : `0${num}`);
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${addZero(String(minutes))}:${addZero(String(seconds))}`;
+  //   useMediaSession({
+  //     title: currentSong.title,
+  //     artwork: currentSong.cover,
+  //     onNext: () => false,
+  //     onPause: () => pause(),
+  //     onPlay: () => play(),
+  //     onPrevious: () => console.log("boom"),
+  //   });
+  function onSearch(e: ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setFilteredTracks(
+      props.tracks.filter((track) => track.title.toLowerCase().includes(value)),
+    );
   }
-
-  useEffect(() => {
-    if (!sound) return;
-    const interval = setInterval(() => {
-      setCurrentTime(sound.seek());
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [sound]);
-
-  useEffect(() => {
-    if (prevSoundRef.current) {
-      prevSoundRef.current.stop();
-    }
-
-    // Save current sound instance
-    if (sound) {
-      prevSoundRef.current = sound;
-      play();
-    }
-  }, [currentSong, sound]);
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-    if (sound) sound.seek(newTime);
-    setCurrentTime(newTime);
-  };
-
-  useMediaSession({
-    title: currentSong.title,
-    artwork: currentSong.cover,
-    onNext: () => false,
-    onPause: () => pause(),
-    onPlay: () => play(),
-    onPrevious: () => console.log("boom"),
-  });
   return (
-    <MasterLayout>
-      <div className="h-[10rem] w-full flex gap-5 fixed z-10 bg-white p-3 bottom-0">
+    <div
+      className={cn(
+        "h-[100dvh] pb-32 bg-primary",
+        isMusicPlayerFullscreen ? "overflow-hidden" : "overflow-auto",
+      )}
+    >
+      <MusicPlayer
+        ref={musicPlayerRef}
+        tracks={props.tracks}
+        currentTrack={(track) => setCurrentTrack(track)}
+        checkFullscreen={(fullscreen) => setIsMusicPlayerFullscreen(fullscreen)}
+      />
+
+      <div className=" w-full h-16 bg-black px-3">
         <div
-          className="h-full w-auto aspect-square bg-center bg-cover cursor-pointer"
-          style={{ backgroundImage: `url("${currentSong.cover}")` }}
-        />
-        <div className="flex flex-col w-full h-full">
-          <h1 className="text-lg">{currentSong.title}</h1>
-          <p className="text-xs">{currentSong.artist?.name}</p>
-          <div className="w-full mt-auto">
-            <div className="flex justify-between items-center">
-              <p>{convertSecondsToTimeString(currentTime)}</p>
-              <p>{convertSecondsToTimeString(sound?.duration())}</p>
-            </div>
-            <input
-              type="range"
-              min="0"
-              className="w-full"
-              max={sound?.duration()}
-              // defaultValue={currentTime}
-              value={currentTime}
-              step="0.1"
-              onChange={handleSeek}
-            />
-          </div>
-          <div className="w-full flex justify-center items-center">
-            <Button
-              onClick={() => {
-                console.log(currentSong);
-                play();
-                sound?.seek(currentTime);
-              }}
-            >
-              Play
-            </Button>
-            <Button onClick={() => stop()}>Stop</Button>
-          </div>
+          className="h-full aspect-square bg-center bg-cover"
+          style={{
+            backgroundImage: 'url("/logo.png")',
+          }}
+        ></div>
+      </div>
+      <div className="sticky top-0 w-full h-auto bg-primary z-[100] overflow-x-auto p-3">
+        <div className="flex gap-1">
+          <Input
+            placeholder="Search track"
+            onChange={onSearch}
+            className="h-12 text-white"
+          />
         </div>
       </div>
-      <ScrollArea className="h-[80svh]">
-        {/* <ContentWrapper> */}
-        {props.tracks.map((track) => (
+
+      {filteredTracks.map((track) => (
+        // <WhenVisible data="idk" fallback={<div>Loading</div>}>
+        <div
+          className="h-[5rem] w-full bg-center cursor-pointer"
+          style={{
+            backgroundImage: `url("${track.cover}")`,
+          }}
+          onClick={() => {
+            musicPlayerRef.current?.playMusic(track);
+            musicPlayerRef.current?.setFullscreen();
+          }}
+        >
           <div
-            className="h-[5rem] w-full bg-center cursor-pointer"
-            style={{ backgroundImage: `url("${track.cover}")` }}
-            onClick={() => {
-              if (sound) stop();
-              setCurrentSong(track);
+            className="w-full h-full flex gap-3"
+            style={{
+              backdropFilter: "blur(5px)",
+              background: "linear-gradient(90deg, black, transparent)",
             }}
           >
             <div
-              className="w-full h-full flex gap-3"
-              style={{
-                backdropFilter: "blur(5px)",
-                background: "linear-gradient(90deg, black, transparent)",
-              }}
+              className="h-full w-auto aspect-square  bg-center bg-cover flex items-center justify-center relative"
+              style={{ backgroundImage: `url("${track.cover}")` }}
             >
               <div
-                className="h-full w-auto aspect-square  bg-center bg-cover"
-                style={{ backgroundImage: `url("${track.cover}")` }}
+                className={`w-full h-full bg-black absolute isolate -z-0`}
+                style={{
+                  background:
+                    track.id === currentTrack?.id
+                      ? "rgba(0,0,0,.8)"
+                      : "transparent",
+                }}
               />
-              <div className="flex flex-col justify-center text-white">
-                <p className="text-xl">{track.title}</p>
-                <p className="text-xs">{track.artist?.name}</p>
-              </div>
+              {track.id === currentTrack?.id && (
+                <PlayIcon color="white" className="z-1" size="50%" />
+              )}
+            </div>
+            <div className="flex flex-col justify-center text-white">
+              <p className="text-xl">{track.title}</p>
+              <p className="text-xs">{track.artist?.name}</p>
             </div>
           </div>
-        ))}
-      </ScrollArea>
-
-      {/* </ContentWrapper> */}
-    </MasterLayout>
+        </div>
+        // </WhenVisible>
+      ))}
+    </div>
   );
 }

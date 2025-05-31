@@ -56,6 +56,17 @@ export default function homepage({ cosers }: HomepageProps) {
                 : "";
             const imageUrl = encodeURIComponent(cleanUrl(image));
             return (
+              //   <WhenVisible
+              //     data={coser.id}
+              //     fallback={
+              //       <Card
+              //         className="relative py-0 overflow-hidden rounded-none bg-blue-500"
+              //         style={{
+              //           aspectRatio: "2/3",
+              //         }}
+              //       ></Card>
+              //     }
+              //   >
               <Link href={"coser/" + coser.id}>
                 <Card
                   className="relative py-0 overflow-hidden rounded-none"
@@ -103,6 +114,7 @@ export default function homepage({ cosers }: HomepageProps) {
                   </CardFooter>
                 </Card>
               </Link>
+              //   </WhenVisible>
             );
           })}
         </ResponsiveGridWrapper>

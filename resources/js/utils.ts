@@ -10,3 +10,10 @@ export function uniqueArrayOfObjects<T>(data: T[], key: string): T[] {
     return true;
   });
 }
+
+export function convertSecondsToTimeString(time: number = 0): string {
+  const addZero = (num: string) => (num.length > 1 ? num : `0${num}`);
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${addZero(String(minutes))}:${addZero(String(seconds))}`;
+}

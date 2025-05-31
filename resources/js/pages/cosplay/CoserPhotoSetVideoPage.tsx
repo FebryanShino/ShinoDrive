@@ -1,10 +1,11 @@
 import BreadcrumbMain from "@/components/app/BreadcrumbMain";
 import ContentWrapper from "@/components/app/ContentWrapper";
 import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
+import { Button } from "@/components/ui/button";
 import MasterLayout from "@/layout/master-layout";
 import { PhotoSetInterface, PhotoSetItemInterface } from "@/types/coser";
 import { cleanUrl } from "@/utils";
-import React from "react";
+import React, { useRef, useState } from "react";
 
 interface ICoserPhotoSetVideoPageProps
   extends React.ComponentPropsWithRef<"div"> {
@@ -15,6 +16,8 @@ interface ICoserPhotoSetVideoPageProps
 export default function CoserPhotoSetVideoPage(
   props: ICoserPhotoSetVideoPageProps,
 ) {
+  const [currentVideo, setCurrentVideo] = useState<PhotoSetItemInterface>();
+  const videoRef = useRef<HTMLVideoElement>(null);
   return (
     <MasterLayout>
       <ContentWrapper>
@@ -34,12 +37,22 @@ export default function CoserPhotoSetVideoPage(
           currentPath="Video"
         />
         <h1>Videos</h1>
+        {currentVideo && (
+          <video ref={videoRef} height="10rem" controls preload="auto">
+            <source src={cleanUrl(currentVideo.path)} type="" />
+          </video>
+        )}
         <ResponsiveGridWrapper minSize="20rem">
           {props.videos &&
-            props.videos.map((video) => (
-              <video width="400" controls>
-                <source src={cleanUrl(video.path)} type="" />
-              </video>
+            props.videos.map((video, index) => (
+              <Button
+                onClick={() => {
+                  setCurrentVideo(video);
+                  videoRef.current?.load();
+                }}
+              >
+                Video {index}
+              </Button>
             ))}
         </ResponsiveGridWrapper>
       </ContentWrapper>

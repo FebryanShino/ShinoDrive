@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Music;
 use App\Http\Controllers\Controller;
 use App\Models\Music\Album;
 use App\Models\Music\Artist;
+use App\Models\Music\Lyric;
 use App\Models\Music\Track;
 use getID3;
 use Illuminate\Http\Request;
@@ -15,19 +16,53 @@ class MusicController extends Controller
 {
     public function index()
     {
-        // return Track::with(['album', 'artist'])->get();
+        // return Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])
+        //     ->where('title', 'Against the Tide')
+        //     ->orWhere('title', 'Stars Align 当群星交汇 (Feat.耀嘉音)')
+        //     ->orWhere('title', 'TruE')
+        //     ->orWhere('title', '愿戴荣光坠入天渊 With Glory I Shall Fall')
+        //     ->orWhere('title', '悠忽舞于梦中')
+        //     ->orWhere('title', 'Ciaconna Trailer.mp3')
+        //     ->orWhere('title', '来吧，献予世界的狂欢')
+        //     ->orWhere('title', '泅溺幽海的迷离')
+        //     ->orderBy('title')->get();
         return Inertia::render('music/MusicListPage', [
-            'tracks' => Track::with(['album', 'artist'])->orderBy('title')->get()
+            'tracks' => Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])->orderBy('title')->get()
         ]);
+    }
+
+
+    public function album()
+    {
+        return response()->json([
+            'album' => Album::with('tracks')->get()
+        ]);
+    }
+
+    public function addLyric(Request $request)
+    {
+        Lyric::create([
+            'text' => $request->text,
+            'timestamp' => $request->timestamp,
+            'track_id' => $request->track_id
+        ]);
+    }
+    public function updateLyric(Request $request, string $id)
+    {
+        $lyric = Lyric::find($id);
+        $lyric->update($request->all());
     }
 
     public function upload(Request $request)
     {
         $files = $request->file('files');
+        $tracks_information = [];
 
         foreach ($files as $file) {
 
             $track_information = $this->getTrackInformation($file);
+
+
 
             if (Track::where('title', $track_information['track_title'])->whereHas(
                 'artist',
@@ -36,12 +71,12 @@ class MusicController extends Controller
                 }
             )->first()) continue;
 
-            $artist = Artist::where('name', $track_information['artist_name'])->first() ?? Artist::create(['name' => $track_information['artist_name']]);
+            $artist = $track_information['artist_name'] ? Artist::where('name', $track_information['artist_name'])->first() ?? Artist::create(['name' => $track_information['artist_name']]) : Artist::where('name', 'Unknown')->first();
             $album = $track_information['album_title'] ?
                 (Album::where('title', $track_information['album_title'])->first() ?? Album::create(['title' => $track_information['album_title'], 'artist_id' => $artist->id]))
                 : Album::where('title', 'Unknown')->first();
 
-            $cleaned_album_title = str_replace("/", "-", $album->title);
+            $cleaned_album_title = str_replace('"', "", str_replace("/", "-", $album->title));
             $cover_path = null;
             if ($track_information['image_data']) {
                 Storage::disk('public')->put("musics/covers/{$cleaned_album_title}/{$track_information['image_filename']}", $track_information['image_data']);
@@ -52,7 +87,7 @@ class MusicController extends Controller
 
 
             $track = Track::create([
-                'title' => $track_information['track_title'],
+                'title' => $track_information['track_title'] ?? $file->getClientOriginalName(),
                 'album_id' => $album->id,
                 'artist_id' => $artist->id,
                 'track_number' => $track_information['track_tracknumber'],
@@ -61,10 +96,26 @@ class MusicController extends Controller
                 'track_path' => Storage::url($track_path),
                 'track_filename' => $file->getClientOriginalName()
             ]);
+            array_push($tracks_information, [
+                'track_title' => $track_information['track_title'],
+                'album_title' => $track_information['album_title'],
+                'artist_name' => $track_information['artist_name'],
+                'track_tracknumber' => $track_information['track_tracknumber'],
+                'track_discnumber' => $track_information['track_discnumber'],
+                'image_filename' => $track_information['image_filename'],
+                'image_mime' => $track_information['image_mime'],
+                'image_data' => base64_encode($track_information['image_data'])
+            ]);
         }
 
+        return back()->with('trackInfo', $tracks_information);
+    }
 
-        return back();
+
+    public function getLyrics(Track $track)
+    {
+        // return $track->load(['lyrics' => fn($track) => $track->orderBy('timestamp')]);
+        return Inertia::render('music/LyricsManagerPage', ['track' => $track->load(['lyrics' => fn($track) => $track->orderBy('timestamp')])]);
     }
 
     private function getTrackInformation($file)
@@ -81,11 +132,13 @@ class MusicController extends Controller
         $track_discnumber = $info['tags']['id3v2']['part_of_a_set'][0] ?? $info['tags']['vorbiscomment']['discnumber'][0] ?? 0;
         $image_filename = null;
         $image_data = null;
+        $image_mime = null;
 
 
         if (!empty($info['id3v2']['APIC'][0]['data']) || !empty($info['comments']['picture'][0]['data'])) {
-            $image_data = $info['id3v2']['APIC'][0]['data'] ?? $info['comments']['picture'][0]['data'];
-            $extension = explode('/', $info['id3v2']['APIC'][0]['image_mime'] ?? $info['comments']['picture'][0]['image_mime'])[1];
+            $image_data = $info['id3v2']['APIC'][0]['data'] ?? $info['comments']['picture'][0]['data'] ?? null;
+            $image_mime =  $info['id3v2']['APIC'][0]['image_mime'] ?? $info['comments']['picture'][0]['image_mime'];
+            $extension = explode('/', $image_mime)[1];
             $image_filename =  $file->getClientOriginalName() . '.' . $extension;
         }
 
@@ -96,6 +149,7 @@ class MusicController extends Controller
             'track_tracknumber' => $track_tracknumber,
             'track_discnumber' => $track_discnumber,
             'image_filename' => $image_filename,
+            'image_mime' => $image_mime,
             'image_data' => $image_data
         ];
     }

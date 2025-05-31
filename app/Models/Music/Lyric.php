@@ -4,20 +4,20 @@ namespace App\Models\Music;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Album extends Model
+class Lyric extends Model
 {
     use HasUuids;
     protected $connection = "music";
-    protected $table = 'albums';
+    protected $table = 'lyrics';
 
     protected $guarded = ['id'];
     public $timestamps = false;
 
 
-    public function tracks(): HasMany
+    public function track(): BelongsTo
     {
-        return $this->hasMany(Track::class, 'album_id');
+        return $this->belongsTo(Track::class, 'track_id');
     }
 }

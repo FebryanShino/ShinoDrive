@@ -32,6 +32,7 @@ export default function PhotoSetItemSquareCard(
       }
       style={{
         backgroundImage: `url("/${encodeURIComponent(cleanUrl(props.photo_set_item.path))}")`,
+        // backgroundImage: `url("${props.photo_set_item.compressed}")`,
       }}
     >
       <Popover>
@@ -77,6 +78,7 @@ export default function PhotoSetItemSquareCard(
       ></div>
       <Image
         src={cleanUrl(props.photo_set_item.path)}
+        // src={cleanUrl(props.photo_set_item.compressed as string)}
         className="opacity-0 aspect-square"
         onLoad={handleLoad}
       />

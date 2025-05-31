@@ -60,7 +60,7 @@ class CoserController extends Controller
     public function detail(Request $request, string $coser, CoserPhotoSet $photo_set)
     {
         $photo_set_item = $photo_set->photoSetItem();
-        $images = $photo_set_item->orderBy('width / height', 'ASC')->get()->load(['tags' => fn($tags) => $tags->orderBy('name')])->where('width', '!=', '-1')->values();
+        $images = $photo_set_item->orderBy('name', 'ASC')->get()->load(['tags' => fn($tags) => $tags->orderBy('name')])->where('width', '!=', '-1')->values();
         $tags = Tag::orderBy('name', 'asc')->get();
         // return fake()->name();
 
@@ -92,7 +92,7 @@ class CoserController extends Controller
     public function uploadCoser(Request $request)
     {
         $coser = Coser::create($request->only(['name', 'translation', 'description']));
-        return back();
+        return redirect(route('coser.photo_set.index', ['coser' => $coser->id]));
     }
 
 
@@ -107,7 +107,7 @@ class CoserController extends Controller
     public function uploadPhotoSet(Request $request)
     {
         $photo_set = $this->updatePhotoSetAndImages($request);
-        return redirect(route('coser.photo_set.index', ['coser' => $photo_set->coser->id]));
+        return redirect(route('coser.photo_set.detail', ['coser' => $photo_set->coser->id, 'photo_set' => $photo_set->id]));
     }
 
     public function uploadPhotoSetItemForm(Request $request, string $coser, CoserPhotoSet $photo_set)

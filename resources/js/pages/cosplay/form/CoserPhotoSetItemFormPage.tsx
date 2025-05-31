@@ -10,9 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import MasterLayout from "@/layout/master-layout";
 import { PhotoSetInterface } from "@/types/coser";
 import { useForm } from "@inertiajs/react";
+import { Flex } from "antd";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
@@ -38,6 +41,7 @@ export default function CoserPhotoSetItemFormPage({
     setData: setFormData,
     post,
     progress,
+    processing,
   } = useForm<{ name: string; files: any; coser: string; coser_id: string }>({
     coser: photo_set.coser.name,
     name: photo_set.name,
@@ -71,14 +75,12 @@ export default function CoserPhotoSetItemFormPage({
               href: `/cosplay/coser/${photo_set.coser.id}/${photo_set.id}`,
             },
           ]}
-          currentPath="Form"
+          currentPath="Upload"
         />
-        <h1>
-          {(progress?.loaded as number) / 1048576} MB /{" "}
-          {(progress?.total as number) / 1048576} MB
-        </h1>
-        <h1>{progress?.percentage}%</h1>
+
+        <h1 className="text-2xl">{photo_set.name}</h1>
         <form onSubmit={handleSubmit}>
+          <h1 className="font-bold text-lg">Upload Form</h1>
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="files">Files</Label>
             <Input
@@ -120,66 +122,87 @@ export default function CoserPhotoSetItemFormPage({
               multiple
             />
           </div>
-          <Button type="submit" color="red" className="mt-4">
+          <Button
+            type="submit"
+            color="red"
+            size="lg"
+            className="mt-4"
+            style={{
+              transition: "background .3s",
+              background: `linear-gradient(90deg, crimson ${progress?.percentage ?? 0}%, black 0%)`,
+            }}
+          >
             Upload
           </Button>
         </form>
-        {previews.new_items.length > 0 && (
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1">
-              <AccordionTrigger>
-                <h1>New files ({previews.new_items.length} Item(s))</h1>
-              </AccordionTrigger>
-              <AccordionContent>
-                <ResponsiveGridWrapper minSize="13rem">
-                  {previews.new_items.map((img: any, index: number) => (
-                    <div
-                      key={index}
-                      className={
-                        "relative w-full h-auto overflow-hidden aspect-square bg-cover bg-top"
-                      }
-                      style={{
-                        backgroundImage: `url("${img.url}")`,
-                      }}
-                    ></div>
-                  ))}
-                </ResponsiveGridWrapper>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        )}
-
-        {previews.duplicates.length > 0 && (
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1">
-              <AccordionTrigger>
-                <h1>Duplicates ({previews.duplicates.length} Item(s))</h1>
-              </AccordionTrigger>
-              <AccordionContent>
-                <ResponsiveGridWrapper minSize="10rem">
-                  {previews.duplicates.map((img: any, index: number) => (
-                    <div
-                      key={index}
-                      className={
-                        "relative w-full h-auto overflow-hidden aspect-square bg-cover bg-top"
-                      }
-                      style={{
-                        backgroundImage: `url("${img.url}")`,
-                      }}
-                    >
+        <h1>
+          {((progress?.loaded ?? 0) / 1048576).toFixed(2)} MB /{" "}
+          {((progress?.total ?? 0) / 1048576).toFixed(2)} MB
+        </h1>
+        <Flex align="center" gap={10}>
+          <Progress value={progress?.percentage ?? 0} />
+          <h1>{progress?.percentage ?? 0}%</h1>
+        </Flex>
+        <div>
+          <Separator />
+          <h1 className="text-lg font-bold mt-5">Image Previews</h1>
+          {previews.new_items.length > 0 && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                  <h1>New files ({previews.new_items.length} Item(s))</h1>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ResponsiveGridWrapper minSize="13rem">
+                    {previews.new_items.map((img: any, index: number) => (
                       <div
-                        className="w-full h-full absolute z-10 bg-amber-400 flex justify-center items-center"
-                        style={{ opacity: 0.5 }}
+                        key={index}
+                        className={
+                          "relative w-full h-auto overflow-hidden aspect-square bg-cover bg-top"
+                        }
+                        style={{
+                          backgroundImage: `url("${img.url}")`,
+                        }}
+                      ></div>
+                    ))}
+                  </ResponsiveGridWrapper>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+
+          {previews.duplicates.length > 0 && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                  <h1>Duplicates ({previews.duplicates.length} Item(s))</h1>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ResponsiveGridWrapper minSize="10rem">
+                    {previews.duplicates.map((img: any, index: number) => (
+                      <div
+                        key={index}
+                        className={
+                          "relative w-full h-auto overflow-hidden aspect-square bg-cover bg-top"
+                        }
+                        style={{
+                          backgroundImage: `url("${img.url}")`,
+                        }}
                       >
-                        <h2>Duplicate</h2>
+                        <div
+                          className="w-full h-full absolute z-10 bg-amber-400 flex justify-center items-center"
+                          style={{ opacity: 0.5 }}
+                        >
+                          <h2>Duplicate</h2>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </ResponsiveGridWrapper>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        )}
+                    ))}
+                  </ResponsiveGridWrapper>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+        </div>
       </ContentWrapper>
     </MasterLayout>
   );

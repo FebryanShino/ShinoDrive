@@ -5,6 +5,7 @@ namespace App\Models\Music;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Track extends Model
 {
@@ -19,8 +20,14 @@ class Track extends Model
     {
         return $this->belongsTo(Album::class, 'album_id');
     }
+
     public function artist(): BelongsTo
     {
         return $this->belongsTo(Artist::class, 'artist_id');
+    }
+
+    public function lyrics(): HasMany
+    {
+        return $this->hasMany(Lyric::class, 'track_id');
     }
 }

@@ -51,6 +51,31 @@ class MusicController extends Controller
         ]);
     }
 
+    public function showArtist(Artist $artist)
+    {
+        return Inertia::render('music/ArtistDetailPage', [
+            'artist' => $artist->load(
+                [
+                    'tracks' => fn($tracks) => $tracks->with(['artist', 'album']),
+                    'albums'
+                ]
+            )
+        ]);
+    }
+
+    public function showAlbum(Album $album)
+    {
+        return Inertia::render('music/AlbumDetailPage', ['album' => $album->load(['artist', 'tracks' => fn($tracks) => $tracks->with(['artist', 'album', 'genre'])])]);
+    }
+
+    public function getAlbumList()
+    {
+
+        return Inertia::render('music/AlbumListPage', [
+            'items' => Album::with(['artist'])->orderBy('title', 'ASC')->paginate(20)->withQueryString()
+        ]);
+    }
+
 
     public function album()
     {

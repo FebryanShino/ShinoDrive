@@ -12,22 +12,34 @@ export interface Track {
   lyrics: Lyric[];
   filepath: string;
   filetype: string;
+  genre: Genre;
+  year: string;
+  duration: number;
 }
 
 export interface Album {
   id: string;
   title: string;
+  artist: Artist;
   artist_id: string;
   release_date: string;
-  track: Track[];
+  tracks: Track[];
+  track_total: number;
+  disc_total: number;
+}
+
+export interface Genre {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface Artist {
   id: string;
   name: string;
   description?: string;
-  track: Track[];
-  album: Album[];
+  tracks: Track[];
+  albums: Album[];
 }
 
 export interface Lyric {

@@ -5,6 +5,7 @@ import { Link, useForm } from "@inertiajs/react";
 import {
   ArrowLeft,
   ArrowUp,
+  EllipsisVerticalIcon,
   PauseIcon,
   PlayIcon,
   PlusIcon,
@@ -14,6 +15,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import React, { useImperativeHandle, useRef, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -165,6 +167,31 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                 <h1 className="text-lg">{props.track.title}</h1>
                 <p className="text-xs">{props.track.artist?.name}</p>
               </div>
+              <Popover>
+                <PopoverTrigger className="ml-auto h-full aspect-square cursor-pointer">
+                  <div className="ml-auto h-full w-full flex items-center justify-center">
+                    <EllipsisVerticalIcon />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="z-[99999999999999999] w-auto p-1">
+                  <Link
+                    href={route("music.artist.show", {
+                      artist: props.track.artist_id,
+                    })}
+                  >
+                    <Button variant="link">
+                      <Avatar>
+                        <AvatarImage
+                          src={`music/artwork/${props.track.album_id}.png`}
+                          alt={props.track.artist?.name}
+                        />
+                        <AvatarFallback>CN</AvatarFallback>
+                      </Avatar>
+                      {props.track.artist?.name}
+                    </Button>
+                  </Link>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <LyricsDisplay

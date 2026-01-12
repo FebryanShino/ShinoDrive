@@ -1,42 +1,45 @@
+import { useAudio } from "@/components/music-context";
 import { useEffect } from "react";
 
-export interface MediaSessionConfig {
-  title: string;
-  artist?: string;
-  album?: string;
-  artwork: string;
+export function useMediaSession() {
+  const { currentTrack, playTrack, next, previous, audio } = useAudio();
 
-  onPlay: () => void;
-  onPause: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  onSeekForward?: () => void;
-  onSeekBackward?: () => void;
-}
-
-export function useMediaSession({
-  title,
-  artist,
-  album,
-  artwork,
-  onPlay,
-  onPause,
-  onNext,
-  onPrevious,
-}: MediaSessionConfig) {
   useEffect(() => {
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new window.MediaMetadata({
-        title,
-        artist,
-        album,
-        artwork: [{ src: artwork, sizes: "512x512", type: "image/png" }],
-      });
+    if (!("mediaSession" in navigator)) return;
+    if (!currentTrack) return;
 
-      navigator.mediaSession.setActionHandler("play", onPlay);
-      navigator.mediaSession.setActionHandler("pause", onPause);
-      navigator.mediaSession.setActionHandler("nexttrack", onNext);
-      navigator.mediaSession.setActionHandler("previoustrack", onPrevious);
-    }
-  }, [title, artist, album, artwork, onPlay, onPause, onNext, onPrevious]);
+    // Update metadata
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.title,
+      artist: currentTrack.artist?.name,
+      album: currentTrack.album?.title,
+      artwork: [
+        {
+          src: `/music/artwork/${currentTrack.album_id}.png`,
+          sizes: "512x512",
+          type: "image/png",
+        },
+      ],
+    });
+
+    // Action handlers
+    navigator.mediaSession.setActionHandler("play", () => audio.play());
+    navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+    navigator.mediaSession.setActionHandler("previoustrack", () => previous());
+    navigator.mediaSession.setActionHandler("nexttrack", () => next());
+
+    // Optional: seekbackward / seekforward
+    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+      audio.currentTime = Math.max(
+        audio.currentTime - (details.seekOffset ?? 10),
+        0,
+      );
+    });
+    navigator.mediaSession.setActionHandler("seekforward", (details) => {
+      audio.currentTime = Math.min(
+        audio.currentTime + (details.seekOffset ?? 10),
+        audio.duration,
+      );
+    });
+  }, [currentTrack, audio, next, previous]);
 }

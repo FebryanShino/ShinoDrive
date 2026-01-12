@@ -47,12 +47,13 @@ export default function LyricsDisplay(props: LyricsDisplayProps) {
       className="h-full w-full overflow-y-auto mb-8 px-4"
       style={{ scrollbarColor: "transparent", scrollbarWidth: "none" }}
     >
-      {props.track.lyrics.map((lyric) => {
-        const isClosestLyric =
-          getClosestLyric(props.track.lyrics, props.timestampSecond * 1000)
-            .id === lyric.id;
-        return <LyricText lyric={lyric} active={isClosestLyric} />;
-      })}
+      {props.track.lyrics &&
+        props.track.lyrics.map((lyric) => {
+          const isClosestLyric =
+            getClosestLyric(props.track.lyrics, props.timestampSecond * 1000)
+              .id === lyric.id;
+          return <LyricText lyric={lyric} active={isClosestLyric} />;
+        })}
     </div>
   );
 }

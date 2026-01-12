@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { RepeatMode, type Track } from "@/types/music";
+import { type Track } from "@/types/music";
 import { convertSecondsToTimeString } from "@/utils";
 import { Link, useForm } from "@inertiajs/react";
 import {
@@ -13,7 +13,8 @@ import {
   SkipBack,
   SkipForward,
 } from "lucide-react";
-import React, { useImperativeHandle, useRef, useState } from "react";
+import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
+import useSound from "use-sound";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -21,31 +22,31 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import LyricsDisplay from "./LyricsDisplay";
 
 export interface MusicPlayerHandle {
+  playMusic: (track?: Track) => void;
+  pauseMusic: () => void;
   setFullscreen: () => void;
 }
 
 interface MusicPlayerProps extends React.ComponentPropsWithoutRef<"div"> {
-  track: Track;
-  isPlaying: boolean;
-  isShuffled: boolean;
-  repeatMode: RepeatMode;
-  currentTime: number;
-  duration: number;
+  tracks: Track[];
+  //   onEnd: (currentTrack: Track) => void;
   autoPlay?: boolean;
-  onPlayOrPause: () => void;
-  onShuffle: () => void;
-  onPlayNext: () => void;
-  onPlayBack: () => void;
-  onSeek: (timestamp: number) => void;
-  onRepeat: () => void;
-  checkFullscreen?: (fullscreen: boolean) => void;
+  currentTrack: (track: Track) => void;
+  checkFullscreen: (fullscreen: boolean) => void;
 }
 
 const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
   (props: MusicPlayerProps, ref) => {
     useImperativeHandle(ref, () => ({
+      playMusic,
+      pauseMusic,
       setFullscreen,
     }));
+
+    const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+    const [randomNumberToRepeat, setRandomNumberToRepeat] = useState(0);
+    const [isShuffled, setIsShuffled] = useState<boolean>(false);
+    const [isRepeated, setIsRepeated] = useState<boolean>(false);
 
     const [currentTime, setCurrentTime] = useState(0);
     const [autoPlay, setAutoPlay] = useState(props.autoPlay as boolean);
@@ -53,18 +54,104 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
     const prevSoundRef = useRef<any>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
+    const isRepeatedRef = useRef(false);
+    const isShuffledRef = useRef(false);
+
+    useEffect(() => {
+      isRepeatedRef.current = isRepeated;
+    }, [isRepeated]);
+    useEffect(() => {
+      isShuffledRef.current = isShuffled;
+    }, [isShuffled]);
+
+    const [play, { sound, stop, pause }] = useSound(
+      currentTrack
+        ? "/audio/" + currentTrack.id + currentTrack.filetype
+        : "/audio/" + props.tracks[0].id + props.tracks[0].filetype,
+      {
+        onend: () => {
+          stop();
+          if (isRepeatedRef.current)
+            return setRandomNumberToRepeat(Math.random());
+
+          setCurrentTrack(
+            isShuffledRef.current
+              ? getRandomTrack()
+              : skipTrackTo(currentTrack as Track, 1),
+          );
+        },
+        id: "main",
+        volume: 1,
+        interrupt: true,
+      },
+    );
+
+    function playMusic(track?: Track) {
+      setAutoPlay(true);
+      if (track) return setCurrentTrack(track);
+      play();
+    }
+    function pauseMusic() {
+      pause();
+    }
+
     function setFullscreen() {
       setIsFullscreen(true);
     }
 
+    function skipTrackTo(current: Track, value: number) {
+      return props.tracks[
+        (((props.tracks.indexOf(current) + value) % props.tracks.length) +
+          props.tracks.length) %
+          props.tracks.length
+      ];
+    }
+
+    function getRandomTrack() {
+      return props.tracks[Math.floor(Math.random() * props.tracks.length)];
+    }
+
+    useEffect(() => {
+      if (!sound) return;
+      const interval = setInterval(() => {
+        setCurrentTime(sound.seek());
+        setData("timestamp", Math.floor(sound.seek() * 1000));
+      }, 300);
+
+      return () => clearInterval(interval);
+    }, [sound]);
+
+    useEffect(() => {
+      if (prevSoundRef.current) {
+        prevSoundRef.current.stop();
+      }
+
+      if (sound && currentTrack) {
+        prevSoundRef.current = sound;
+        props.currentTrack(currentTrack);
+        setData("track_id", currentTrack.id);
+        if (autoPlay) play();
+      }
+    }, [currentTrack, sound, randomNumberToRepeat]);
+
     const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTime = parseFloat(e.target.value);
-      props.onSeek(newTime);
+      if (sound) sound.seek(newTime);
+      setCurrentTime(newTime);
+    };
+
+    const handlePlayOrPause = () => {
+      //   console.log("http://192.168.1.10:8000/audio/" + currentTrack.id);
+      if (sound?.playing()) pause();
+      else {
+        play();
+        sound?.seek(currentTime);
+      }
     };
 
     const { data, setData, progress, post } = useForm({
       text: "",
-      track_id: props.track?.id,
+      track_id: currentTrack?.id,
       timestamp: 0,
     });
     function handleSubmit(e: React.FormEvent) {
@@ -75,7 +162,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
       });
     }
 
-    if (props.track)
+    if (currentTrack)
       return (
         <div
           className={cn(
@@ -85,9 +172,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
           style={{
             transition: "height .3s, flex-direction 1s",
             height: isFullscreen ? "100dvh" : "8rem",
-            backgroundImage: isFullscreen
-              ? `url("/music/artwork/${props.track.album_id}.png")`
-              : "",
+            backgroundImage: isFullscreen ? `url("${currentTrack.cover}")` : "",
             backgroundColor: isFullscreen ? `` : "black",
           }}
         >
@@ -100,6 +185,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
           <div className=" w-full" hidden={isFullscreen}>
             <div
               onClick={() => {
+                props.checkFullscreen(!isFullscreen);
                 setIsFullscreen(!isFullscreen);
               }}
               className={cn(
@@ -116,18 +202,18 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
               <div
                 className="h-[4rem] w-auto aspect-square bg-center bg-cover cursor-pointer rounded-full flex items-center justify-center"
                 style={{
-                  backgroundImage: `url("/music/artwork/${props.track.album_id}.png")`,
+                  backgroundImage: `url("${currentTrack.cover}")`,
                 }}
               ></div>
               <div className="w-full flex flex-col justify-center">
-                <h1 className="text-lg">{props.track.title}</h1>
-                <p className="text-xs">{props.track.artist?.name}</p>
+                <h1 className="text-lg">{currentTrack.title}</h1>
+                <p className="text-xs">{currentTrack.artist?.name}</p>
               </div>
               <div
                 className="h-[4rem] aspect-square w-auto  flex justify-center items-center"
-                onClick={() => props.onPlayOrPause()}
+                onClick={handlePlayOrPause}
               >
-                {props.isPlaying ? (
+                {sound?.playing() ? (
                   <PauseIcon size="2rem" color="white" />
                 ) : (
                   <PlayIcon size="2rem" color="white" />
@@ -149,7 +235,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
             >
               <div
                 onClick={() => {
-                  // props.checkFullscreen(!isFullscreen);
+                  props.checkFullscreen(!isFullscreen);
                   setIsFullscreen(!isFullscreen);
                 }}
                 className={cn(
@@ -162,31 +248,34 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                 <ArrowLeft size="50%" />
               </div>
               <div hidden={!isFullscreen}>
-                <h1 className="text-lg">{props.track.title}</h1>
-                <p className="text-xs">{props.track.artist?.name}</p>
+                <h1 className="text-lg">{currentTrack.title}</h1>
+                <p className="text-xs">{currentTrack.artist?.name}</p>
               </div>
             </div>
 
             <LyricsDisplay
-              track={props.track}
-              timestampSecond={props.currentTime}
+              track={
+                props.tracks.find(
+                  (track) => track.id === currentTrack.id,
+                ) as Track
+              }
+              timestampSecond={currentTime}
             />
-
             <div className="flex flex-col w-full h-auto px-3">
               <div
                 className="w-full mt-3 flex flex-col-reverse"
                 hidden={!isFullscreen}
               >
                 <div className="flex justify-between items-center">
-                  <p>{convertSecondsToTimeString(props.currentTime)}</p>
-                  <p>{convertSecondsToTimeString(props.duration)}</p>
+                  <p>{convertSecondsToTimeString(currentTime)}</p>
+                  <p>{convertSecondsToTimeString(sound?.duration())}</p>
                 </div>
                 <input
                   type="range"
                   min="0"
                   className="w-full"
-                  max={props.duration}
-                  value={props.currentTime}
+                  max={sound?.duration()}
+                  value={currentTime}
                   step="0.1"
                   onChange={handleSeek}
                 />
@@ -195,20 +284,29 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                 hidden={!isFullscreen}
                 className="flex justify-center items-center px-5"
               >
-                <div className="mr-auto" onClick={() => props.onShuffle()}>
-                  <ShuffleIcon color={props.isShuffled ? "white" : "gray"} />
+                <div
+                  className="mr-auto"
+                  onClick={() => setIsShuffled(!isShuffled)}
+                >
+                  <ShuffleIcon color={isShuffled ? "white" : "gray"} />
                 </div>
                 <div
                   className="w-16 h-auto aspect-square flex  justify-center items-center"
-                  onClick={() => props.onPlayBack()}
+                  onClick={() =>
+                    setCurrentTrack((prevTrack) =>
+                      isShuffled
+                        ? getRandomTrack()
+                        : skipTrackTo(prevTrack as Track, -1),
+                    )
+                  }
                 >
                   <SkipBack size="50%" />
                 </div>
                 <div
                   className="w-16 h-auto aspect-square flex  justify-center items-center"
-                  onClick={() => props.onPlayOrPause()}
+                  onClick={handlePlayOrPause}
                 >
-                  {props.isPlaying ? (
+                  {sound?.playing() ? (
                     <PauseIcon size="70%" color="white" />
                   ) : (
                     <PlayIcon size="70%" color="white" />
@@ -216,14 +314,21 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                 </div>
                 <div
                   className="w-16 h-auto aspect-square flex  justify-center items-center"
-                  onClick={() => props.onPlayNext()}
+                  onClick={() =>
+                    setCurrentTrack((prevTrack) =>
+                      isShuffled
+                        ? getRandomTrack()
+                        : skipTrackTo(prevTrack as Track, 1),
+                    )
+                  }
                 >
                   <SkipForward size="50%" />
                 </div>
-                <div className="ml-auto" onClick={() => props.onRepeat()}>
-                  <Repeat1Icon
-                    color={props.repeatMode !== "off" ? "white" : "gray"}
-                  />
+                <div
+                  className="ml-auto"
+                  onClick={() => setIsRepeated(!isRepeated)}
+                >
+                  <Repeat1Icon color={isRepeated ? "white" : "gray"} />
                 </div>
               </div>
               <div
@@ -256,7 +361,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                     </form>
                   </PopoverContent>
                 </Popover>
-                <Link href={`track/${props.track.id}/lyrics`}>
+                <Link href={`track/${currentTrack.id}/lyrics`}>
                   <Button>Lyrics</Button>
                 </Link>
               </div>

@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import MasterLayout from "@/layout/master-layout";
 import { Tag } from "@/types";
 import { CoserInterface, PhotoSetItemInterface } from "@/types/coser";
-import { cleanUrl, uniqueArrayOfObjects } from "@/utils";
+import { uniqueArrayOfObjects } from "@/utils";
 import { Link } from "@inertiajs/react";
 import { Flex } from "antd";
 import { ImageIcon, PlusIcon, VideoIcon } from "lucide-react";
@@ -46,14 +46,14 @@ export default function CoserDetailPage({ coser }: CoserDetailPageProps) {
                   (item) =>
                     item.extension != ".mp4" && item.extension != ".mov",
                 ) as PhotoSetItemInterface[]
-              )[0].path;
+              )[0].id;
               return (
                 <Link href={`${coser.id}/${set.id}`}>
                   <div
                     className="w-full bg-cover bg-top text-white"
                     style={{
                       aspectRatio: 3 / 5,
-                      backgroundImage: `url("/${encodeURIComponent(cleanUrl(coverImage))}")`,
+                      backgroundImage: `url("/cosplay/file/${coverImage}")`,
                     }}
                     // cover={
                     //   <AspectRatio

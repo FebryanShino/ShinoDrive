@@ -4,7 +4,6 @@ import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
 import { Button } from "@/components/ui/button";
 import MasterLayout from "@/layout/master-layout";
 import { PhotoSetInterface, PhotoSetItemInterface } from "@/types/coser";
-import { cleanUrl } from "@/utils";
 import React, { useRef, useState } from "react";
 
 interface ICoserPhotoSetVideoPageProps
@@ -39,7 +38,7 @@ export default function CoserPhotoSetVideoPage(
         <h1>Videos</h1>
         {currentVideo && (
           <video ref={videoRef} height="10rem" controls preload="auto">
-            <source src={cleanUrl(currentVideo.path)} type="" />
+            <source src={`/cosplay/file/${currentVideo.id}`} />
           </video>
         )}
         <ResponsiveGridWrapper minSize="20rem">

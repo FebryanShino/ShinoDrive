@@ -1,11 +1,12 @@
 import "../css/app.css";
 
 import { createInertiaApp } from "@inertiajs/react";
+import "boxicons";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createRoot } from "react-dom/client";
 import { route as routeFn } from "ziggy-js";
-import { initializeTheme } from "./hooks/use-appearance";
-import "boxicons";
+import { AudioProvider } from "./components/music-context";
+import { useMediaSession } from "./hooks/use-media-session";
 
 declare global {
   const route: typeof routeFn;
@@ -22,8 +23,17 @@ createInertiaApp({
     ),
   setup({ el, App, props }) {
     const root = createRoot(el);
+    const Root = () => {
+      useMediaSession();
 
-    root.render(<App {...props} />);
+      return <App {...props} />;
+    };
+
+    root.render(
+      <AudioProvider>
+        <Root />
+      </AudioProvider>,
+    );
   },
   progress: {
     color: "#4B5563",

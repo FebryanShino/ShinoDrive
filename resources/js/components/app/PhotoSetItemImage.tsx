@@ -1,6 +1,5 @@
 import { Tag } from "@/types";
 import { PhotoSetItemInterface } from "@/types/coser";
-import { cleanUrl } from "@/utils";
 import { Image, Skeleton } from "antd";
 import { Info } from "lucide-react";
 import React, { useState } from "react";
@@ -26,7 +25,7 @@ export default function PhotoSetItemImage(props: PhotoSetItemImageProps) {
         "relative w-full h-auto rounded overflow-hidden bg-cover bg-top"
       }
       style={{
-        backgroundImage: `url("/${encodeURIComponent(cleanUrl(props.photo_set_item.path))}")`,
+        backgroundImage: `url("/cosplay/file/${props.photo_set_item.id}")`,
         aspectRatio:
           props.photo_set_item.width < props.photo_set_item.height
             ? 2 / 3
@@ -54,7 +53,7 @@ export default function PhotoSetItemImage(props: PhotoSetItemImageProps) {
         className="opacity-0"
         height="100%"
         width="100%"
-        src={cleanUrl(props.photo_set_item.path)}
+        src={`/cosplay/file/${props.photo_set_item.id}`}
         onLoad={handleLoad}
       />
 

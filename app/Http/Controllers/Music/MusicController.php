@@ -26,8 +26,28 @@ class MusicController extends Controller
         //     ->orWhere('title', '来吧，献予世界的狂欢')
         //     ->orWhere('title', '泅溺幽海的迷离')
         //     ->orderBy('title')->get();
+
+        $random_albums = Album::with('artist', 'tracks')->where('title', 'LIKE', '%blue archive%')->get();
+        // return $random_albums;
         return Inertia::render('music/MusicListPage', [
-            'tracks' => Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])->orderBy('title')->get()
+            'tracks' => Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])->take(20)->get()
+        ]);
+    }
+
+    public function browseMusic(Request $request)
+    {
+        $keyword = $request->query('q');
+        $tracks = $keyword ? Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])
+            ->where('title', 'like', '%' . $keyword . '%')
+            ->orWhereHas('artist', function ($q) use ($keyword) {
+                $q->where('name', 'like', '%' . $keyword . '%');
+            })
+            ->orWhereHas('album', function ($q) use ($keyword) {
+                $q->where('title', 'like', '%' . $keyword . '%');
+            })->get() : [];
+
+        return Inertia::render('music/MusicSearchPage', [
+            'tracks' => $tracks
         ]);
     }
 
@@ -109,6 +129,64 @@ class MusicController extends Controller
         }
 
         return back()->with('trackInfo', $tracks_information);
+    }
+
+
+    public function getTrackArtwork(string $album_id)
+    {
+        $path = "E:/Musics/Artworks/{$album_id}";
+        abort_unless(file_exists($path), 404);
+        return response()->file($path);
+    }
+
+
+    public function getTrackAudio(string $filename)
+    {
+        $track = Track::find(
+            explode(".", $filename)[0]
+        );
+
+        $path = $track->filepath;
+        $size = filesize($path);
+        $mime = mime_content_type($path);
+
+        $start = 0;
+        $end = $size - 1;
+
+        $headers = [
+            'Content-Type'  => $mime,
+            'Accept-Ranges' => 'bytes',
+        ];
+
+        if (request()->hasHeader('Range')) {
+            preg_match('/bytes=(\d+)-(\d+)?/', request()->header('Range'), $matches);
+
+            $start = (int) $matches[1];
+            if (isset($matches[2])) {
+                $end = (int) $matches[2];
+            }
+
+            $headers['Content-Range']  = "bytes $start-$end/$size";
+            $headers['Content-Length'] = ($end - $start) + 1;
+
+            return response()->stream(function () use ($path, $start, $end) {
+                $fp = fopen($path, 'rb');
+                fseek($fp, $start);
+
+                while (!feof($fp) && ftell($fp) <= $end) {
+                    echo fread($fp, 8192);
+                    flush();
+                }
+
+                fclose($fp);
+            }, 206, $headers);
+        }
+
+        $headers['Content-Length'] = $size;
+
+        return response()->stream(function () use ($path) {
+            readfile($path);
+        }, 200, $headers);
     }
 
 

@@ -10,7 +10,7 @@ class Lyric extends Model
 {
     use HasUuids;
     protected $connection = "music";
-    protected $table = 'lyrics';
+    protected $table = 'lyric';
 
     protected $guarded = ['id'];
     public $timestamps = false;

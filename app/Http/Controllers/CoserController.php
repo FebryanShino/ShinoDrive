@@ -14,9 +14,13 @@ class CoserController extends Controller
 {
     public function index()
     {
+        $path = 'E:\Musics\Game Original Soundtrack\Persona\[2024.04.24] ATLUS Sound Team - Persona 3 Reload (Original Soundtrack)\Disc 1\1. Full Moon Full Life.flac';
+        // return response()->file($path);
+
         $random_images = CoserPhotoSetItem::with(['coser', 'photoSet'])->where('extension', '.jpeg')
             ->orWhere('extension', '.jpg')
             ->orWhere('extension', '.png')
+            ->orWhere('extension', '.avif')
             ->get()->shuffle()->take(8);
 
         $top_cosers = Coser::with('photoSetItem')->withCount('photoSetItem')->orderBy('photo_set_item_count', 'desc')->get()->take(5);
@@ -29,7 +33,6 @@ class CoserController extends Controller
     public function coser(Request $request)
     {
         $cosers = Coser::with(['photoSetItem', 'photoSet'])->orderBy('name', 'asc')->paginate(8);
-        // return $cosers;
         return Inertia::render('cosplay/CoserListPage', [
             'cosers' => $cosers
         ]);
@@ -121,6 +124,13 @@ class CoserController extends Controller
         $photo_set = $this->updatePhotoSetAndImages($request);
 
         return redirect(route('coser.photo_set.detail', ['coser' => $photo_set->coser->id, 'photo_set' => $photo_set->id]));
+    }
+
+
+    public function getFile(CoserPhotoSetItem $photo_set_item)
+    {
+        $item = $photo_set_item->load(['coser', 'photoSet']);
+        return response()->file(storage_path("app/public/cosers/{$item->coser->name}/{$item->photoSet->name}/{$item->name}"));
     }
 
 

@@ -10,7 +10,8 @@ export interface Track {
   album?: Album;
   artist?: Artist;
   lyrics: Lyric[];
-  track_path: string;
+  filepath: string;
+  filetype: string;
 }
 
 export interface Album {
@@ -35,3 +36,5 @@ export interface Lyric {
   timestamp: number;
   track_id: string;
 }
+
+export type RepeatMode = "off" | "one" | "all";

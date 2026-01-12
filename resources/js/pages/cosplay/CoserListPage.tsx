@@ -13,7 +13,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import MasterLayout from "@/layout/master-layout";
 import { CoserInterface, PhotoSetItemInterface } from "@/types/coser";
-import { cleanUrl } from "@/utils";
 import { Link } from "@inertiajs/react";
 import { Flex } from "antd";
 import { ImageIcon, LibraryBig, PlusIcon } from "lucide-react";
@@ -51,10 +50,11 @@ export default function homepage({ cosers }: HomepageProps) {
               (coser.photo_set_item as PhotoSetItemInterface[])?.length > 0
                 ? (coser.photo_set_item as PhotoSetItemInterface[]).filter(
                     (value) =>
-                      value.extension === ".jpg" || value.extension === ".png",
-                  )[0].path
+                      value.extension === ".jpg" ||
+                      value.extension === ".png" ||
+                      value.extension === ".avif",
+                  )[0].id
                 : "";
-            const imageUrl = encodeURIComponent(cleanUrl(image));
             return (
               //   <WhenVisible
               //     data={coser.id}
@@ -72,7 +72,7 @@ export default function homepage({ cosers }: HomepageProps) {
                   className="relative py-0 overflow-hidden rounded-none"
                   style={{
                     aspectRatio: "2/3",
-                    backgroundImage: `url("/${imageUrl}")`,
+                    backgroundImage: `url("/cosplay/file/${image}")`,
                   }}
                 >
                   <div
@@ -84,7 +84,7 @@ export default function homepage({ cosers }: HomepageProps) {
                       "relative w-full h-auto overflow-hidden aspect-square bg-cover bg-top"
                     }
                     style={{
-                      backgroundImage: `url("/${imageUrl}")`,
+                      backgroundImage: `url("/cosplay/file/${image}")`,
                     }}
                   />
                   <CardContent className="z-10 flex flex-col w-full h-[30%] justify-between">

@@ -140,7 +140,7 @@ function LyricComponent(props: {
 
 export default function LyricsManagerPage(props: LyricsManagerPageProps) {
   const [currentTime, setCurrentTime] = useState(0);
-  const [play, { sound, stop, pause }] = useSound(props.track.track_path, {
+  const [play, { sound, stop, pause }] = useSound(props.track.filepath, {
     id: "main",
     volume: 1,
     interrupt: true,

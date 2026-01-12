@@ -3,11 +3,10 @@ import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
 import { Button } from "@/components/ui/button";
 import MasterLayout from "@/layout/master-layout";
 import { CoserInterface, PhotoSetItemInterface } from "@/types/coser";
-import { cleanUrl } from "@/utils";
 import React from "react";
 
 interface CoserLandingPageProps extends React.ComponentPropsWithRef<"div"> {
-  randomImages: PhotoSetItemInterface[];
+  randomImages: PhotoSetItemInterface[] | null;
   topCosers: CoserInterface[];
 }
 
@@ -28,7 +27,7 @@ export default function CoserLandingPage({
               <a href={`/cosplay/coser/${item.coser_id}/${item.photo_set_id}`}>
                 <div
                   style={{
-                    backgroundImage: `url("${encodeURIComponent(cleanUrl(item.path))}")`,
+                    backgroundImage: `url("/cosplay/file/${item.id}")`,
                   }}
                   className="aspect-square w-full h-full overflow-hidden relative bg-cover bg-top"
                 >
@@ -65,15 +64,13 @@ export default function CoserLandingPage({
                 <div
                   className="overflow-hidden w-full aspect-square rounded-full bg-cover bg-top"
                   style={{
-                    backgroundImage: `url("${encodeURIComponent(
-                      cleanUrl(
-                        (
-                          coser.photo_set_item?.filter(
-                            (item) => item.width != -1,
-                          ) as PhotoSetItemInterface[]
-                        )[0].path,
-                      ),
-                    )}")`,
+                    backgroundImage: `url("/cosplay/file/${
+                      (
+                        coser.photo_set_item?.filter(
+                          (item) => item.width != -1,
+                        ) as PhotoSetItemInterface[]
+                      )[0].id
+                    }")`,
                   }}
                 ></div>
                 <div className="text-center text-black w-full block mt-3">

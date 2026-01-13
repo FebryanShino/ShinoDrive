@@ -10,9 +10,11 @@ import {
   PlayIcon,
   PlusIcon,
   Repeat1Icon,
+  RepeatIcon,
   ShuffleIcon,
   SkipBack,
   SkipForward,
+  UserRoundIcon,
 } from "lucide-react";
 import React, { useImperativeHandle, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -88,7 +90,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
             transition: "height .3s, flex-direction 1s",
             height: isFullscreen ? "100dvh" : "8rem",
             backgroundImage: isFullscreen
-              ? `url("/music/artwork/${props.track.album_id}.png")`
+              ? `url("/music/artwork/${props.track.album_id}.${props.track.album?.artwork_ext}")`
               : "",
             backgroundColor: isFullscreen ? `` : "black",
           }}
@@ -118,7 +120,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
               <div
                 className="h-[4rem] w-auto aspect-square bg-center bg-cover cursor-pointer rounded-full flex items-center justify-center"
                 style={{
-                  backgroundImage: `url("/music/artwork/${props.track.album_id}.png")`,
+                  backgroundImage: `url("/music/artwork/${props.track.album_id}.${props.track.album?.artwork_ext}")`,
                 }}
               ></div>
               <div className="w-full flex flex-col justify-center">
@@ -163,9 +165,9 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
               >
                 <ArrowLeft size="50%" />
               </div>
-              <div hidden={!isFullscreen}>
-                <h1 className="text-lg">{props.track.title}</h1>
-                <p className="text-xs">{props.track.artist?.name}</p>
+              <div hidden={!isFullscreen} className="w-[60%]">
+                <h1 className="text-lg truncate ">{props.track.title}</h1>
+                <p className="text-xs truncate">{props.track.artist?.name}</p>
               </div>
               <Popover>
                 <PopoverTrigger className="ml-auto h-full aspect-square cursor-pointer">
@@ -178,6 +180,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                     href={route("music.artist.show", {
                       artist: props.track.artist_id,
                     })}
+                    onClick={() => setIsFullscreen(false)}
                   >
                     <Button variant="link">
                       <Avatar>
@@ -185,7 +188,9 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                           src={`music/artwork/${props.track.album_id}.png`}
                           alt={props.track.artist?.name}
                         />
-                        <AvatarFallback>CN</AvatarFallback>
+                        <AvatarFallback>
+                          <UserRoundIcon />
+                        </AvatarFallback>
                       </Avatar>
                       {props.track.artist?.name}
                     </Button>
@@ -248,9 +253,13 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
                   <SkipForward size="50%" />
                 </div>
                 <div className="ml-auto" onClick={() => props.onRepeat()}>
-                  <Repeat1Icon
-                    color={props.repeatMode !== "off" ? "white" : "gray"}
-                  />
+                  {props.repeatMode === "all" ? (
+                    <RepeatIcon color="white" />
+                  ) : props.repeatMode === "one" ? (
+                    <Repeat1Icon color="white" />
+                  ) : (
+                    <RepeatIcon color="gray" />
+                  )}
                 </div>
               </div>
               <div

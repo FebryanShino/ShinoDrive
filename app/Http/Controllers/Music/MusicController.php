@@ -16,21 +16,10 @@ class MusicController extends Controller
 {
     public function index()
     {
-        // return Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])
-        //     ->where('title', 'Against the Tide')
-        //     ->orWhere('title', 'Stars Align 当群星交汇 (Feat.耀嘉音)')
-        //     ->orWhere('title', 'TruE')
-        //     ->orWhere('title', '愿戴荣光坠入天渊 With Glory I Shall Fall')
-        //     ->orWhere('title', '悠忽舞于梦中')
-        //     ->orWhere('title', 'Ciaconna Trailer.mp3')
-        //     ->orWhere('title', '来吧，献予世界的狂欢')
-        //     ->orWhere('title', '泅溺幽海的迷离')
-        //     ->orderBy('title')->get();
-
-        $random_albums = Album::with('artist', 'tracks')->where('title', 'LIKE', '%blue archive%')->get();
-        // return $random_albums;
         return Inertia::render('music/MusicListPage', [
-            'tracks' => Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])->take(20)->get()
+            'random_artists' => Artist::with(['albums'])->inRandomOrder()->take(5)->get(),
+            'random_tracks' => Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])->inRandomOrder()->take(30)->get(),
+            'random_albums' => Album::with(['artist', 'tracks'])->inRandomOrder()->take(20)->get()
         ]);
     }
 
@@ -53,11 +42,12 @@ class MusicController extends Controller
 
     public function showArtist(Artist $artist)
     {
+
         return Inertia::render('music/ArtistDetailPage', [
             'artist' => $artist->load(
                 [
                     'tracks' => fn($tracks) => $tracks->with(['artist', 'album']),
-                    'albums'
+                    'albums' => fn($album) => $album->withCount('tracks')
                 ]
             )
         ]);
@@ -65,15 +55,31 @@ class MusicController extends Controller
 
     public function showAlbum(Album $album)
     {
-        return Inertia::render('music/AlbumDetailPage', ['album' => $album->load(['artist', 'tracks' => fn($tracks) => $tracks->with(['artist', 'album', 'genre'])])]);
+        return Inertia::render('music/AlbumDetailPage', [
+            'album' => $album->load([
+                'artist',
+                'tracks' => fn($tracks) => $tracks->with(['artist', 'album', 'genre', 'lyrics'])->orderBy('disc_number', 'asc')->orderBy('track_number', 'asc')
+            ])
+        ]);
     }
 
-    public function getAlbumList()
+    public function getAlbumList(Request $request)
     {
+        $page = (int) $request->query('page', 1);
+        // return Album::with(['artist'])->orderBy('title', 'ASC')->paginate(20)->withQueryString();
 
         return Inertia::render('music/AlbumListPage', [
-            'items' => Album::with(['artist'])->orderBy('title', 'ASC')->paginate(20)->withQueryString()
+            'albums' => Album::with(['artist'])->orderBy('title', 'ASC')->paginate(
+                perPage: 20 * $page,
+                page: 1
+            ),
+            'page' => $page,
         ]);
+    }
+
+    public function reconstructAlbumList(string $current_page)
+    {
+        return Album::with(['artist'])->orderBy('title', 'ASC')->get()->take(20 * ($current_page - 1));
     }
 
 

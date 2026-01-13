@@ -5,7 +5,7 @@ export interface Track {
   album_id: string;
   cover: string;
   track_number: number;
-  disk_number: number;
+  disc_number: number;
   genre_id?: string;
   album?: Album;
   artist?: Artist;
@@ -22,10 +22,13 @@ export interface Album {
   title: string;
   artist: Artist;
   artist_id: string;
+  has_artwork: boolean;
+  artwork_ext: string;
   release_date: string;
   tracks: Track[];
   track_total: number;
   disc_total: number;
+  tracks_count: number;
 }
 
 export interface Genre {

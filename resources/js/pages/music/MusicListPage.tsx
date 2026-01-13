@@ -1,20 +1,22 @@
 import ContentWrapper from "@/components/app/ContentWrapper";
+import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
 import { useAudio } from "@/components/music-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Track } from "@/types/music";
-import { Link } from "@inertiajs/react";
-import { type ChangeEvent, useState } from "react";
+import { Album, Artist, Track } from "@/types/music";
+import { Link, router } from "@inertiajs/react";
+import { useState } from "react";
 
 interface IMusicListPageProps extends React.ComponentPropsWithoutRef<"div"> {
-  tracks: Track[];
+  random_tracks: Track[];
+  random_albums: Album[];
+  random_artists: Artist[];
 }
 
 export default function MusicListPage(props: IMusicListPageProps) {
   const [currentTrack, setCurrentTrack] = useState<Track>();
   const [isMusicPlayerFullscreen, setIsMusicPlayerFullscreen] = useState(false);
-  const [filteredTracks, setFilteredTracks] = useState<Track[]>(props.tracks);
 
   const MusicContext = useAudio();
 
@@ -26,14 +28,7 @@ export default function MusicListPage(props: IMusicListPageProps) {
   //     onPlay: () => play(),
   //     onPrevious: () => console.log("boom"),
   //   });
-  function onSearch(e: ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    setFilteredTracks(
-      props.tracks.filter((track) =>
-        String(track.title).toLowerCase().includes(value),
-      ),
-    );
-  }
+
   const { playTrack, playPlaylist } = useAudio();
   return (
     <div
@@ -55,62 +50,112 @@ export default function MusicListPage(props: IMusicListPageProps) {
       </Link>
       <div className="sticky top-0 w-full h-auto bg-primary z-[100] overflow-x-auto p-3"></div>
       <ContentWrapper>
-        <div className="bg-red-300 w-full h-auto">
-          <h1 className="text-white">Title</h1>
-          <div className="flex overflow-x-auto">
-            <Link href="/anime">
-              <Card className="w-[35%] bg-transparent border-none shadow-none">
-                <CardHeader className="px-2">
-                  <CardTitle>Playlist</CardTitle>
-                </CardHeader>
-                <CardContent className="w-auto h-full px-2">
-                  <div className="w-auto h-full bg-black aspect-video rounded-lg"></div>
-                </CardContent>
-              </Card>
-            </Link>
-            <Card className="w-[35%] bg-transparent border-none shadow-none">
-              <CardHeader className="px-2">
-                <CardTitle>Playlist</CardTitle>
-              </CardHeader>
-              <CardContent className="w-auto h-full px-2">
-                <div className="w-auto h-full bg-black aspect-video rounded-lg"></div>
-              </CardContent>
-            </Card>
-            <Card className="w-[35%] bg-transparent border-none shadow-none">
-              <CardHeader className="px-2">
-                <CardTitle>Playlist</CardTitle>
-              </CardHeader>
-              <CardContent className="w-auto h-full px-2">
-                <div className="w-auto h-full bg-black aspect-video rounded-lg"></div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        <div className="w-full h-auto mt-10">
-          <h1 className="text-white">New Songs</h1>
-          <div className="grid grid-rows-4 grid-flow-col auto-cols-[24rem] overflow-x-auto snap-x snap-mandatory w-full gap-0.5 scrollbar-hide">
-            {props.tracks.map((track, index) => (
-              <div
-                className="truncate snap-start h-14 flex p-1 gap-2"
-                onClick={() => {
-                  playPlaylist(props.tracks, index);
-                }}
-              >
-                <img
-                  src={`/music/artwork/${track.album_id}.png`}
-                  className="h-full aspect-square"
-                />
-                <div className="w-[60%]">
-                  <h3 className="truncate text-white">{track.title}</h3>
-                  <p className="text-xs text-gray-400 truncate">
-                    {track.artist?.name}
-                  </p>
+        <Card
+          className={cn("shadow-none bg-transparent border-none", "w-full")}
+        >
+          <CardHeader className="p-0">
+            <h1 className="text-white font-bold text-3xl">New</h1>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="flex overflow-x-auto h-80 snap-x snap-mandatory scrollbar-hide gap-3">
+              {props.random_artists.map((artist) => (
+                <Link href={route("music.artist.show", { id: artist.id })}>
+                  <Card className="w-auto h-full bg-transparent border-none shadow-none snap-start">
+                    <CardHeader className="p-0">
+                      <CardTitle>
+                        <h1 className="text-gray-100 font-light w-60 truncate">
+                          {artist.name}
+                        </h1>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="w-auto h-[70%] p-0">
+                      <div
+                        className="w-auto h-full aspect-video rounded-lg bg-cover bg-top"
+                        style={{
+                          backgroundColor: "black",
+                          backgroundImage: artist.albums[0]?.has_artwork
+                            ? `url(/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext})`
+                            : "",
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className={cn("shadow-none bg-transparent border-none", "w-full")}
+        >
+          <CardHeader className="p-0">
+            <h1 className="text-white font-bold text-xl">Latest Songs</h1>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="grid grid-rows-4 grid-flow-col auto-cols-[24rem] overflow-x-auto snap-x snap-mandatory w-full gap-0.5 scrollbar-hide">
+              {props.random_tracks.map((track, index) => (
+                <div
+                  className="truncate snap-start h-14 flex p-1 gap-2"
+                  onClick={() =>
+                    router.visit(
+                      route("music.album.show", { album: track.album_id }),
+                    )
+                  }
+                >
+                  <div
+                    className="h-full rounded-sm aspect-square bg-cover"
+                    style={{
+                      backgroundColor: "black",
+                      backgroundImage: track.album?.has_artwork
+                        ? `url(/music/artwork/${track.album?.id}.${track.album?.artwork_ext})`
+                        : "",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playPlaylist(props.random_tracks, index);
+                    }}
+                  />
+                  <div className="w-[60%]">
+                    <h3 className="truncate text-white">{track.title}</h3>
+                    <p className="text-xs text-gray-400 truncate">
+                      {track.artist?.name}
+                    </p>
+                  </div>
+                  <div className="h-full aspect-square rounded-md ml-auto"></div>
                 </div>
-                <div className="h-full aspect-square rounded-md ml-auto"></div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="w-full px-3 shadow-none border-none bg-transparent mt-3">
+          <CardHeader className="p-0">
+            <h1 className="text-white font-bold text-xl">Albums</h1>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ResponsiveGridWrapper minSize="10rem" gap="1rem">
+              {props.random_albums.map((album) => (
+                <Link href={route("music.album.show", { album: album.id })}>
+                  <Card className="p-0 overflow-hidden gap-1 border-none shadow-none rounded-none bg-trasnparent">
+                    <CardHeader className="p-0">
+                      <div
+                        style={{
+                          backgroundColor: "black",
+                          backgroundImage: album.has_artwork
+                            ? `url(/music/artwork/${album.id}.${album.artwork_ext})`
+                            : "",
+                        }}
+                        className="w-full aspect-square bg-cover rounded-sm"
+                      />
+                    </CardHeader>
+                    <CardContent className="w-full p-0 h-12">
+                      <span className="text-xs text-white">{album.title}</span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </ResponsiveGridWrapper>
+          </CardContent>
+        </Card>
       </ContentWrapper>
 
       {/* {filteredTracks.map((track) => (

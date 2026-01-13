@@ -49,7 +49,9 @@ export default function MusicSearchPage({ tracks }: { tracks: Track[] }) {
               <CardHeader className="p-3">
                 <div
                   style={{
-                    backgroundImage: `url(/music/artwork/${track.album_id}.png)`,
+                    backgroundImage: track.album?.has_artwork
+                      ? `url(/music/artwork/${track.album_id}.${track.album?.artwork_ext})`
+                      : "",
                   }}
                   className="w-full aspect-square bg-cover"
                 >

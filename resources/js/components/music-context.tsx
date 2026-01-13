@@ -39,9 +39,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(new Audio());
 
   const [playlist, setPlaylist] = useState<Track[]>([]);
+  const [originalPlaylist, setOriginalPlaylist] = useState<Track[]>([]);
   const [queue, setQueue] = useState<Track[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
 
+  const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
 
   const [currentTime, setCurrentTime] = useState(0);
@@ -87,7 +89,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   };
 
   const playPlaylist = async (tracks: Track[], startIndex = 0) => {
-    setPlaylist(tracks);
+    if (isShuffled) {
+      setPlaylist([...tracks].sort(() => Math.random() - 0.5));
+      setCurrentIndex(0);
+    } else {
+      setPlaylist(tracks);
+    }
+    setOriginalPlaylist(tracks);
     setCurrentIndex(startIndex);
     audioRef.current.src = `/audio/${tracks[startIndex].id}`;
     await audioRef.current.play();
@@ -128,8 +136,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   };
 
   const shuffle = () => {
-    setPlaylist((p) => [...p].sort(() => Math.random() - 0.5));
-    setCurrentIndex(0);
+    if (!isShuffled) {
+      const shuffledPlaylist = [...playlist].sort(() => Math.random() - 0.5);
+      setPlaylist(shuffledPlaylist);
+      setCurrentIndex(shuffledPlaylist.indexOf(currentTrack));
+    } else {
+      setPlaylist(originalPlaylist);
+      setCurrentIndex(originalPlaylist.indexOf(currentTrack));
+    }
+    setIsShuffled(!isShuffled);
   };
 
   const toggleRepeat = () => {
@@ -179,12 +194,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         track={currentTrack}
         isPlaying={isPlaying}
         repeatMode={repeatMode}
-        isShuffled={false}
+        isShuffled={isShuffled}
         currentTime={currentTime}
         duration={duration}
         onRepeat={() => toggleRepeat()}
         onSeek={(time) => seek(time)}
-        onShuffle={() => console.log("shuffle hahah")}
+        onShuffle={() => shuffle()}
         onPlayNext={() => {
           console.log(queue);
           next();

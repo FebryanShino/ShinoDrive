@@ -5,7 +5,7 @@ import "boxicons";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createRoot } from "react-dom/client";
 import { route as routeFn } from "ziggy-js";
-import { AudioProvider } from "./components/music-context";
+import { MusicProvider } from "./components/music-context";
 import { useMediaSession } from "./hooks/use-media-session";
 
 declare global {
@@ -30,9 +30,9 @@ createInertiaApp({
     };
 
     root.render(
-      <AudioProvider>
+      <MusicProvider>
         <Root />
-      </AudioProvider>,
+      </MusicProvider>,
     );
   },
   progress: {

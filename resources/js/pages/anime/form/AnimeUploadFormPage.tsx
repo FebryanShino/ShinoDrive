@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { MALAnimeData } from "@/types/anime";
-import { useForm } from "@inertiajs/react";
+import { router, useForm } from "@inertiajs/react";
 import { Image } from "antd";
 import { ChevronDownIcon, ChevronUpIcon, Search } from "lucide-react";
 import { useState } from "react";
@@ -25,9 +25,10 @@ export default function AnimeUploadFormPage() {
     progress,
     processing,
     transform,
-  } = useForm<{ title: string; mal_id: string; episodes: any }>({
+  } = useForm<{ title: string; mal_id: string; cover: string; episodes: any }>({
     title: "",
     mal_id: "",
+    cover: "",
     episodes: [],
   });
   const [animeEpisodes, setAnimeEpisodes] = useState<IAnimeEpisode[]>();
@@ -65,11 +66,15 @@ export default function AnimeUploadFormPage() {
         ...data,
         title: animeSeries.title,
         mal_id: animeSeries.mal_id,
+        cover: animeSeries.images.webp.large_image_url,
         episodes: animeEpisodes,
       }));
 
       post("/anime/upload", {
-        onFinish: () => toast(`Images has been Added`, {}),
+        onFinish: () => {
+          toast(`Images has been Added`, {});
+          router.visit(route("anime.index"));
+        },
       });
     }
   }

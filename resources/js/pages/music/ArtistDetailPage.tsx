@@ -1,6 +1,6 @@
 import ContentWrapper from "@/components/app/ContentWrapper";
 import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
-import { useAudio } from "@/components/music-context";
+import { useMusic } from "@/components/music-context";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Artist } from "@/types/music";
@@ -8,7 +8,7 @@ import { Link, router } from "@inertiajs/react";
 import { useMediaQuery } from "react-responsive";
 
 export default function ArtistDetailPage({ artist }: { artist: Artist }) {
-  const { playPlaylist, currentTrack } = useAudio();
+  const { playPlaylist, currentTrack } = useMusic();
   const isDesktopOrLaptop = useMediaQuery({
     query: "(min-width: 1224px)",
   });
@@ -19,8 +19,8 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
           <div
             className="h-[40%] aspect-square bg-red-400 rounded-full bg-cover"
             style={{
-              backgroundImage: artist.albums[0]?.has_artwork
-                ? `url(/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext})`
+              backgroundImage: artist.albums[0]?.id
+                ? `url("/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext}")`
                 : "",
             }}
           />
@@ -55,8 +55,8 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                 )}
                 style={{
                   backgroundColor: "black",
-                  backgroundImage: artist.albums[0]?.has_artwork
-                    ? `url(/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext})`
+                  backgroundImage: artist.albums[0]?.id
+                    ? `url("/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext}")`
                     : "",
                 }}
               />
@@ -82,6 +82,7 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                 {artist.tracks.map((track, index) => (
                   <div
                     className="truncate snap-start h-14 flex p-1 gap-2"
+                    key={track.id}
                     onClick={() =>
                       router.visit(
                         route("music.album.show", { album: track.album_id }),
@@ -92,8 +93,8 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                       className="h-full rounded-sm aspect-square bg-cover"
                       style={{
                         backgroundColor: "black",
-                        backgroundImage: artist.albums[0]?.has_artwork
-                          ? `url(/music/artwork/${track.album?.id}.${track.album?.artwork_ext})`
+                        backgroundImage: artist.albums[0]?.id
+                          ? `url("/music/artwork/${track.album?.id}.${track.album?.artwork_ext}")`
                           : "",
                       }}
                       onClick={(e) => {
@@ -127,8 +128,8 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                       <div
                         style={{
                           backgroundColor: "black",
-                          backgroundImage: album.has_artwork
-                            ? `url(/music/artwork/${album.id}.${album.artwork_ext})`
+                          backgroundImage: album.id
+                            ? `url("/music/artwork/${album.id}.${album.artwork_ext}")`
                             : "",
                         }}
                         className="w-full aspect-square bg-cover rounded-sm"

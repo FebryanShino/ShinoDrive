@@ -1,8 +1,8 @@
-import { useAudio } from "@/components/music-context";
+import { useMusic } from "@/components/music-context";
 import { useEffect } from "react";
 
 export function useMediaSession() {
-  const { currentTrack, playTrack, next, previous, audio } = useAudio();
+  const { currentTrack, playTrack, next, previous, audio } = useMusic();
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
@@ -15,9 +15,9 @@ export function useMediaSession() {
       album: currentTrack.album?.title,
       artwork: [
         {
-          src: `/music/artwork/${currentTrack.album_id}.png`,
+          src: `/music/artwork/${currentTrack.album_id}.${currentTrack.album?.artwork_ext}`,
           sizes: "512x512",
-          type: "image/png",
+          type: `image/${currentTrack.album?.artwork_ext}`,
         },
       ],
     });

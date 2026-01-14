@@ -90,7 +90,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
             transition: "height .3s, flex-direction 1s",
             height: isFullscreen ? "100dvh" : "8rem",
             backgroundImage: isFullscreen
-              ? `url("/music/artwork/${props.track.album_id}.${props.track.album?.artwork_ext}")`
+              ? `url("/music/artwork/${props.track.album?.id}.${props.track.album?.artwork_ext}")`
               : "",
             backgroundColor: isFullscreen ? `` : "black",
           }}
@@ -120,7 +120,7 @@ const MusicPlayer = React.forwardRef<MusicPlayerHandle, MusicPlayerProps>(
               <div
                 className="h-[4rem] w-auto aspect-square bg-center bg-cover cursor-pointer rounded-full flex items-center justify-center"
                 style={{
-                  backgroundImage: `url("/music/artwork/${props.track.album_id}.${props.track.album?.artwork_ext}")`,
+                  backgroundImage: `url("/music/artwork/${props.track.album?.id}.${props.track.album?.artwork_ext}")`,
                 }}
               ></div>
               <div className="w-full flex flex-col justify-center">

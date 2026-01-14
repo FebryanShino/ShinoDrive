@@ -1,12 +1,12 @@
 import ContentWrapper from "@/components/app/ContentWrapper";
 import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
-import { useAudio } from "@/components/music-context";
-import { Button } from "@/components/ui/button";
+import { useMusic } from "@/components/music-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MusicLayout from "@/layouts/app/music-layout";
 import { cn } from "@/lib/utils";
 import { Album, Artist, Track } from "@/types/music";
 import { Link, router } from "@inertiajs/react";
-import { useState } from "react";
 
 interface IMusicListPageProps extends React.ComponentPropsWithoutRef<"div"> {
   random_tracks: Track[];
@@ -15,40 +15,10 @@ interface IMusicListPageProps extends React.ComponentPropsWithoutRef<"div"> {
 }
 
 export default function MusicListPage(props: IMusicListPageProps) {
-  const [currentTrack, setCurrentTrack] = useState<Track>();
-  const [isMusicPlayerFullscreen, setIsMusicPlayerFullscreen] = useState(false);
-
-  const MusicContext = useAudio();
-
-  //   useMediaSession({
-  //     title: currentSong.title,
-  //     artwork: currentSong.cover,
-  //     onNext: () => false,
-  //     onPause: () => pause(),
-  //     onPlay: () => play(),
-  //     onPrevious: () => console.log("boom"),
-  //   });
-
-  const { playTrack, playPlaylist } = useAudio();
+  const isMobile = useIsMobile();
+  const { playPlaylist } = useMusic();
   return (
-    <div
-      className={cn(
-        "h-[100dvh] pb-32 bg-primary",
-        isMusicPlayerFullscreen ? "overflow-hidden" : "overflow-auto",
-      )}
-    >
-      <div className=" w-full h-16 bg-black px-3">
-        <div
-          className="h-full aspect-square bg-center bg-cover"
-          style={{
-            backgroundImage: 'url("/logo.png")',
-          }}
-        ></div>
-      </div>
-      <Link href={route("music.browse")}>
-        <Button>Search music</Button>
-      </Link>
-      <div className="sticky top-0 w-full h-auto bg-primary z-[100] overflow-x-auto p-3"></div>
+    <MusicLayout>
       <ContentWrapper>
         <Card
           className={cn("shadow-none bg-transparent border-none", "w-full")}
@@ -58,30 +28,37 @@ export default function MusicListPage(props: IMusicListPageProps) {
           </CardHeader>
           <CardContent className="p-0">
             <div className="flex overflow-x-auto h-80 snap-x snap-mandatory scrollbar-hide gap-3">
-              {props.random_artists.map((artist) => (
-                <Link href={route("music.artist.show", { id: artist.id })}>
-                  <Card className="w-auto h-full bg-transparent border-none shadow-none snap-start">
-                    <CardHeader className="p-0">
-                      <CardTitle>
-                        <h1 className="text-gray-100 font-light w-60 truncate">
-                          {artist.name}
-                        </h1>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="w-auto h-[70%] p-0">
-                      <div
-                        className="w-auto h-full aspect-video rounded-lg bg-cover bg-top"
-                        style={{
-                          backgroundColor: "black",
-                          backgroundImage: artist.albums[0]?.has_artwork
-                            ? `url(/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext})`
-                            : "",
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+              {props.random_artists.map(function (artist) {
+                const albumThatHasArtwork =
+                  artist.albums.filter((album) => album.artwork_ext)[0] ?? [];
+                return (
+                  <Link
+                    key={artist.id}
+                    href={route("music.artist.show", { id: artist.id })}
+                  >
+                    <Card className="w-auto h-full bg-transparent border-none shadow-none snap-start">
+                      <CardHeader className="p-0">
+                        <CardTitle>
+                          <h1 className="text-gray-100 font-light w-60 truncate">
+                            {artist.name}
+                          </h1>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="w-auto h-[70%] p-0">
+                        <div
+                          className="w-auto h-full aspect-video rounded-lg bg-cover bg-top"
+                          style={{
+                            backgroundColor: "black",
+                            backgroundImage: albumThatHasArtwork.artwork_ext
+                              ? `url("/music/artwork/${albumThatHasArtwork.id}.${albumThatHasArtwork.artwork_ext}")`
+                              : "",
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -95,6 +72,7 @@ export default function MusicListPage(props: IMusicListPageProps) {
             <div className="grid grid-rows-4 grid-flow-col auto-cols-[24rem] overflow-x-auto snap-x snap-mandatory w-full gap-0.5 scrollbar-hide">
               {props.random_tracks.map((track, index) => (
                 <div
+                  key={track.id}
                   className="truncate snap-start h-14 flex p-1 gap-2"
                   onClick={() =>
                     router.visit(
@@ -106,8 +84,8 @@ export default function MusicListPage(props: IMusicListPageProps) {
                     className="h-full rounded-sm aspect-square bg-cover"
                     style={{
                       backgroundColor: "black",
-                      backgroundImage: track.album?.has_artwork
-                        ? `url(/music/artwork/${track.album?.id}.${track.album?.artwork_ext})`
+                      backgroundImage: track.album?.artwork_ext
+                        ? `url("/music/artwork/${track.album?.id}.${track.album?.artwork_ext}")`
                         : "",
                     }}
                     onClick={(e) => {
@@ -132,16 +110,22 @@ export default function MusicListPage(props: IMusicListPageProps) {
             <h1 className="text-white font-bold text-xl">Albums</h1>
           </CardHeader>
           <CardContent className="p-0">
-            <ResponsiveGridWrapper minSize="10rem" gap="1rem">
+            <ResponsiveGridWrapper
+              minSize={isMobile ? "6rem" : "10rem"}
+              gap={isMobile ? "0.3rem" : "1rem"}
+            >
               {props.random_albums.map((album) => (
-                <Link href={route("music.album.show", { album: album.id })}>
+                <Link
+                  key={album.id}
+                  href={route("music.album.show", { album: album.id })}
+                >
                   <Card className="p-0 overflow-hidden gap-1 border-none shadow-none rounded-none bg-trasnparent">
                     <CardHeader className="p-0">
                       <div
                         style={{
                           backgroundColor: "black",
-                          backgroundImage: album.has_artwork
-                            ? `url(/music/artwork/${album.id}.${album.artwork_ext})`
+                          backgroundImage: album.artwork_ext
+                            ? `url("/music/artwork/${album.id}.${album.artwork_ext}")`
                             : "",
                         }}
                         className="w-full aspect-square bg-cover rounded-sm"
@@ -157,51 +141,6 @@ export default function MusicListPage(props: IMusicListPageProps) {
           </CardContent>
         </Card>
       </ContentWrapper>
-
-      {/* {filteredTracks.map((track) => (
-        // <WhenVisible data="idk" fallback={<div>Loading</div>}>
-        <div
-          className="h-[5rem] w-full bg-center cursor-pointer"
-          style={{
-            backgroundImage: `url("${track.cover}")`,
-          }}
-          onClick={() => {
-            musicPlayerRef.current?.playMusic(track);
-            musicPlayerRef.current?.setFullscreen();
-          }}
-        >
-          <div
-            className="w-full h-full flex gap-3"
-            style={{
-              backdropFilter: "blur(5px)",
-              background: "linear-gradient(90deg, black, transparent)",
-            }}
-          >
-            <div
-              className="h-full w-auto aspect-square  bg-center bg-cover flex items-center justify-center relative"
-              style={{ backgroundImage: `url("${track.cover}")` }}
-            >
-              <div
-                className={`w-full h-full bg-black absolute isolate -z-0`}
-                style={{
-                  background:
-                    track.id === currentTrack?.id
-                      ? "rgba(0,0,0,.8)"
-                      : "transparent",
-                }}
-              />
-              {track.id === currentTrack?.id && (
-                <PlayIcon color="white" className="z-1" size="50%" />
-              )}
-            </div>
-            <div className="flex flex-col justify-center text-white">
-              <p className="text-xl">{track.title}</p>
-              <p className="text-xs">{track.artist?.name}</p>
-            </div>
-          </div>
-        </div>
-        // </WhenVisible>
-      ))} */}
-    </div>
+    </MusicLayout>
   );
 }

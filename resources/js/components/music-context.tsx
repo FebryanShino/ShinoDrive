@@ -215,7 +215,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAudio() {
+export function useMusic() {
   const ctx = useContext(AudioContext);
   if (!ctx) throw new Error("useAudio must be used within AudioProvider");
   return ctx;

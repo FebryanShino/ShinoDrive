@@ -1,45 +1,30 @@
 import ContentWrapper from "@/components/app/ContentWrapper";
 import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import MusicLayout from "@/layouts/app/music-layout";
+import { Paginated } from "@/types/laravel";
 import { Album } from "@/types/music";
 import { Page } from "@inertiajs/core";
-import { Link, router, usePage, useRemember } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useRef, useState } from "react";
 
-interface PaginationLink {
-  url: string | null;
-  label: string;
-  active: boolean;
-}
-
-interface Paginated<T> {
-  data: T[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-  next_page_url: string | null;
-  prev_page_url: string | null;
-  links: PaginationLink[];
-}
-
 export default function AlbumListPage() {
-  const [scrollY, setScrollY] = useRemember(0, "page-scroll");
+  //   const [scrollY, setScrollY] = useRemember(0, "page-scroll");
 
-  // restore scroll
-  useEffect(() => {
-    window.scrollTo(0, scrollY);
-  }, []);
+  //   // restore scroll
+  //   useEffect(() => {
+  //     window.scrollTo(0, scrollY);
+  //   }, []);
 
-  // save scroll
-  useEffect(() => {
-    const onScroll = () => {
-      setScrollY(window.scrollY);
-    };
+  //   // save scroll
+  //   useEffect(() => {
+  //     const onScroll = () => {
+  //       setScrollY(window.scrollY);
+  //     };
 
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  //     window.addEventListener("scroll", onScroll);
+  //     return () => window.removeEventListener("scroll", onScroll);
+  //   }, []);
 
   const { albums, page } = usePage<{
     albums: Paginated<Album>;
@@ -91,38 +76,43 @@ export default function AlbumListPage() {
     return () => observer.disconnect();
   }, []);
   return (
-    <ContentWrapper>
-      <ResponsiveGridWrapper minSize="10rem">
-        {items &&
-          items.map((album, index) => {
-            const isLast = index === items.length - 1;
+    <MusicLayout>
+      <ContentWrapper>
+        <ResponsiveGridWrapper minSize="10rem">
+          {items &&
+            items.map((album, index) => {
+              const isLast = index === items.length - 1;
 
-            return (
-              <Link href={route("music.album.show", { album: album.id })}>
-                <Card className="p-0 overflow-hidden gap-1 border-none shadow-none rounded-none">
-                  <CardHeader className="p-0">
-                    <div
-                      style={{
-                        backgroundColor: album.has_artwork ? "black" : "red",
-                        backgroundImage: album.has_artwork
-                          ? `url(/music/artwork/${album.id}.${album.artwork_ext})`
-                          : "",
-                      }}
-                      className="w-full aspect-square bg-cover rounded-sm"
-                    />
-                  </CardHeader>
-                  <CardContent className="w-full p-0 h-12">
-                    <span className="text-xs">{album.title}</span>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-      </ResponsiveGridWrapper>
-      {/* trigger */}
-      <div ref={loaderRef} className="h-10" />
+              return (
+                <Link
+                  key={album.id}
+                  href={route("music.album.show", { album: album.id })}
+                >
+                  <Card className="p-0 overflow-hidden gap-1 border-none shadow-none rounded-none bg-transparent text-white">
+                    <CardHeader className="p-0">
+                      <div
+                        style={{
+                          backgroundColor: "black",
+                          backgroundImage: album.id
+                            ? `url("/music/artwork/${album.id}.${album.artwork_ext}")`
+                            : "",
+                        }}
+                        className="w-full aspect-square bg-cover rounded-sm"
+                      />
+                    </CardHeader>
+                    <CardContent className="w-full p-0 h-12">
+                      <span className="text-xs">{album.title}</span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+        </ResponsiveGridWrapper>
+        {/* trigger */}
+        <div ref={loaderRef} className="h-10" />
 
-      {!albums?.next_page_url && <p className="text-center">No more data</p>}
-    </ContentWrapper>
+        {!albums?.next_page_url && <p className="text-center">No more data</p>}
+      </ContentWrapper>
+    </MusicLayout>
   );
 }

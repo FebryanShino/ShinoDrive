@@ -61,6 +61,16 @@ return [
             'journal_mode' => null,
             'synchronous' => null,
         ],
+        'music_extension' => [
+            'driver' => 'sqlite',
+            'url' => env('DB_URL'),
+            'database' => database_path('music_extension.db'),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+        ],
         'anime' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

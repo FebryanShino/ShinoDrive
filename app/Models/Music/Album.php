@@ -11,7 +11,7 @@ class Album extends Model
 {
     use HasUuids;
     protected $connection = "music";
-    protected $table = 'album';
+    protected $table = 'albums';
 
     protected $guarded = ['id'];
     public $timestamps = false;

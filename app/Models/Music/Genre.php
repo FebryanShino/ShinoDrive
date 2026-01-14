@@ -9,7 +9,7 @@ class Genre extends Model
 {
     use HasUuids;
     protected $connection = "music";
-    protected $table = 'genre';
+    protected $table = 'genres';
 
     protected $guarded = ['id'];
     public $timestamps = false;

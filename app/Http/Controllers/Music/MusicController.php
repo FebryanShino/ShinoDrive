@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Music;
 use App\Http\Controllers\Controller;
 use App\Models\Music\Album;
 use App\Models\Music\Artist;
+use App\Models\Music\Collection;
+use App\Models\Music\CollectionItem;
 use App\Models\Music\Lyric;
 use App\Models\Music\Track;
 use getID3;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -18,25 +21,34 @@ class MusicController extends Controller
     {
         return Inertia::render('music/MusicListPage', [
             'random_artists' => Artist::with(['albums'])->inRandomOrder()->take(5)->get(),
-            'random_tracks' => Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])->inRandomOrder()->take(30)->get(),
+            'random_tracks' => Track::with(['album', 'artist'])->inRandomOrder()->take(30)->get(),
             'random_albums' => Album::with(['artist', 'tracks'])->inRandomOrder()->take(20)->get()
+        ]);
+    }
+
+    public function getTrackList()
+    {
+        return Inertia::render('music/TrackListPage', [
+            'tracks' => Track::with(['artist', 'album'])->orderBy('title', 'asc')->paginate(20)->withQueryString()
         ]);
     }
 
     public function browseMusic(Request $request)
     {
         $keyword = $request->query('q');
-        $tracks = $keyword ? Track::with(['album', 'artist', 'lyrics' => fn($lyric) => $lyric->orderBy('timestamp')])
-            ->where('title', 'like', '%' . $keyword . '%')
-            ->orWhereHas('artist', function ($q) use ($keyword) {
-                $q->where('name', 'like', '%' . $keyword . '%');
-            })
-            ->orWhereHas('album', function ($q) use ($keyword) {
-                $q->where('title', 'like', '%' . $keyword . '%');
-            })->get() : [];
+        $tracks = [];
+        $albums = [];
+        if ($keyword) {
+            $tracks = Track::with(['album', 'artist'])
+                ->where('title', 'like', '%' . $keyword . '%')
+                ->orderBy('title', 'asc')->get();
 
+            $albums = Album::with(['tracks', 'artist'])->where('title', 'like', '%' . $keyword . '%')->orderBy('title', 'asc')->get();
+        }
         return Inertia::render('music/MusicSearchPage', [
-            'tracks' => $tracks
+            'keyword' => $keyword,
+            'tracks' => $tracks,
+            'albums' => $albums
         ]);
     }
 
@@ -58,7 +70,7 @@ class MusicController extends Controller
         return Inertia::render('music/AlbumDetailPage', [
             'album' => $album->load([
                 'artist',
-                'tracks' => fn($tracks) => $tracks->with(['artist', 'album', 'genre', 'lyrics'])->orderBy('disc_number', 'asc')->orderBy('track_number', 'asc')
+                'tracks' => fn($tracks) => $tracks->with(['artist', 'album', 'genre'])->orderBy('disc_number', 'asc')->orderBy('track_number', 'asc')
             ])
         ]);
     }
@@ -77,18 +89,67 @@ class MusicController extends Controller
         ]);
     }
 
-    public function reconstructAlbumList(string $current_page)
+
+
+
+    // Collections controllers
+
+    public function getCollectionList()
     {
-        return Album::with(['artist'])->orderBy('title', 'ASC')->get()->take(20 * ($current_page - 1));
+        return Collection::with(['tracks' => fn($tracks) => $tracks->with(['album', 'artist'])])->get();
     }
 
-
-    public function album()
+    public function showCollection(Collection $collection)
     {
-        return response()->json([
-            'album' => Album::with('tracks')->get()
+        return Inertia::render('music/CollectionDetailPage', [
+            'collection' => $collection->load((['tracks' => fn($tracks) => $tracks->with(['album', 'artist'])]))
         ]);
     }
+
+    public function createCollection(Request $request)
+    {
+        return "baka";
+    }
+
+    public function addTracksToCollection(Request $request)
+    {
+        $id = "";
+        $track_hashes = [];
+        $data = collect($track_hashes)
+            ->map(fn($track_hash) => [
+                'collection_id' => $id,
+                'item_hash' => $track_hash
+            ])
+            ->chunk(1000);
+
+        DB::transaction(function () use ($data) {
+            foreach ($data as $chunk) {
+                CollectionItem::insert($chunk->toArray());
+            }
+        });
+    }
+
+    public function deleteTracksFromCollection()
+    {
+        $pairs = [];
+        DB::transaction(function () use ($pairs) {
+            CollectionItem::where(function ($q) use ($pairs) {
+                foreach ($pairs as $pair) {
+                    $q->orWhere(function ($q) use ($pair) {
+                        $q->where('collection_id', $pair['collection_id'])
+                            ->where('item_hash', $pair['item_hash']);
+                    });
+                }
+            })->delete();
+        });
+    }
+
+
+
+
+
+
+    // Lyrics Controllers
 
     public function addLyric(Request $request)
     {

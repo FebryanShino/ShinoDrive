@@ -1,38 +1,33 @@
 import ContentWrapper from "@/components/app/ContentWrapper";
-import { useAudio } from "@/components/music-context";
+import { useMusic } from "@/components/music-context";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MusicLayout from "@/layouts/app/music-layout";
 import { cn } from "@/lib/utils";
 import { Album } from "@/types/music";
 import { convertSecondsToTimeString } from "@/utils";
 import { Link } from "@inertiajs/react";
 import { DotIcon, EllipsisVerticalIcon, PlayIcon } from "lucide-react";
-import { useMediaQuery } from "react-responsive";
 
 export default function AlbumDetailPage(props: { album: Album }) {
-  const isDesktopOrLaptop = useMediaQuery({
-    query: "(min-width: 1224px)",
-  });
-  const { playPlaylist, currentTrack } = useAudio();
+  const isMobile = useIsMobile();
+  const { playPlaylist, currentTrack } = useMusic();
+  const discTotal =
+    props.album.tracks[props.album.tracks.length - 1].disc_number;
   return (
-    <div className="bg-primary min-h-dvh">
+    <MusicLayout>
       <ContentWrapper>
-        {/* <Link href={route("music.album.index")}>
-        <Button variant="link">
-        <ArrowLeftIcon />
-        Back
-        </Button>
-        </Link> */}
         <div
           className={cn(
             "flex gap-4",
-            isDesktopOrLaptop ? "flex-row h-72 " : "flex-col h-auto",
+            !isMobile ? "flex-row h-72 " : "flex-col h-auto",
           )}
         >
           <div
             className="bg-cover h-full aspect-square rounded-lg"
             style={{
-              backgroundImage: props.album.has_artwork
-                ? `url(/music/artwork/${props.album.id}.${props.album.artwork_ext})`
+              backgroundImage: props.album.id
+                ? `url("/music/artwork/${props.album.id}.${props.album.artwork_ext}")`
                 : "",
             }}
           />
@@ -61,7 +56,7 @@ export default function AlbumDetailPage(props: { album: Album }) {
               </div>
             </div>
             <Button
-              className={cn("w-30 bg-red-500", isDesktopOrLaptop ? "" : "mt-8")}
+              className={cn("w-30 bg-red-500", !isMobile ? "" : "mt-8")}
               onClick={() => playPlaylist(props.album.tracks)}
             >
               <PlayIcon />
@@ -71,7 +66,7 @@ export default function AlbumDetailPage(props: { album: Album }) {
         </div>
 
         <div className="mt-20">
-          {Array(props.album.tracks[props.album.tracks.length - 1].disc_number)
+          {Array(discTotal ?? 1)
             .fill("")
             .map((disc, index) => (
               <div className="mb-10">
@@ -82,7 +77,9 @@ export default function AlbumDetailPage(props: { album: Album }) {
                   </h2>
                 </div>
                 {props.album.tracks
-                  .filter((item) => item.disc_number === index + 1)
+                  .filter((item) =>
+                    discTotal ? item.disc_number === index + 1 : true,
+                  )
                   .map((track, index) => (
                     <div
                       className={cn(
@@ -113,6 +110,6 @@ export default function AlbumDetailPage(props: { album: Album }) {
             ))}
         </div>
       </ContentWrapper>
-    </div>
+    </MusicLayout>
   );
 }

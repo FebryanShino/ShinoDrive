@@ -11,10 +11,12 @@ class Track extends Model
 {
     use HasUuids;
     protected $connection = "music";
-    protected $table = 'track';
+    protected $table = 'tracks';
 
     protected $guarded = ['id'];
     public $timestamps = false;
+
+    protected $hidden = ['hash_hex'];
 
     public function album(): BelongsTo
     {

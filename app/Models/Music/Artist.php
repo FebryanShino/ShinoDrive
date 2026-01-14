@@ -10,7 +10,7 @@ class Artist extends Model
 {
     use HasUuids;
     protected $connection = "music";
-    protected $table = 'artist';
+    protected $table = 'artists';
 
     protected $guarded = ['id'];
     public $timestamps = false;

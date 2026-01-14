@@ -9,15 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Lyric extends Model
 {
     use HasUuids;
-    protected $connection = "music";
-    protected $table = 'lyric';
+    protected $connection = "music_extension";
+    protected $table = 'lyrics';
 
     protected $guarded = ['id'];
     public $timestamps = false;
-
-
-    public function track(): BelongsTo
-    {
-        return $this->belongsTo(Track::class, 'track_id');
-    }
 }

@@ -22,7 +22,7 @@ export interface Album {
   title: string;
   artist: Artist;
   artist_id: string;
-  has_artwork: boolean;
+  artwork_filename: boolean;
   artwork_ext: string;
   release_date: string;
   tracks: Track[];
@@ -50,6 +50,15 @@ export interface Lyric {
   text: string;
   timestamp: number;
   track_id: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  cover: string;
+  tracks: Track[];
+  created_at: Date;
+  updated_at: Date;
 }
 
 export type RepeatMode = "off" | "one" | "all";

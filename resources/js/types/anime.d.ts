@@ -1,10 +1,28 @@
-export interface MALAnimeData {
+export interface AnimeSeries {
+  id: string;
+  name: string;
   mal_id: string;
+  episodes: AnimeEpisode[];
+  cover: string;
+}
+
+export interface AnimeEpisode {
+  id: string;
+  name: string;
+  path: string;
+  anime_series_id: string;
+  series: AnimeSeries;
+  number: number;
+  file_extension: string;
+}
+
+export interface MALAnimeData {
+  mal_id: number;
   url: string;
-  images: Images;
+  images: MALImages;
   trailer: Trailer;
   approved: boolean;
-  titles: Title[];
+  titles: MALTitle[];
   title: string;
   title_english: string | null;
   title_japanese: string | null;
@@ -27,37 +45,37 @@ export interface MALAnimeData {
   background: string | null;
   season: string;
   year: number;
-  broadcast: Broadcast;
-  producers: Entity[];
-  licensors: Entity[];
-  studios: Entity[];
-  genres: Entity[];
-  explicit_genres: Entity[];
-  themes: Entity[];
-  demographics: Entity[];
+  broadcast: MALBroadcast;
+  producers: MALEntity[];
+  licensors: MALEntity[];
+  studios: MALEntity[];
+  genres: MALEntity[];
+  explicit_genres: MALEntity[];
+  themes: MALEntity[];
+  demographics: MALEntity[];
 }
 
 /* ---------- Sub Types ---------- */
 
-interface Images {
-  jpg: ImageFormat;
-  webp: ImageFormat;
+interface MALImages {
+  jpg: MALImageFormat;
+  webp: MALImageFormat;
 }
 
-interface ImageFormat {
+interface MALImageFormat {
   image_url: string;
   small_image_url: string;
   large_image_url: string;
 }
 
-interface Trailer {
+interface MALTrailer {
   youtube_id: string | null;
   url: string | null;
   embed_url: string | null;
-  images: TrailerImages;
+  images: MALTrailerImages;
 }
 
-interface TrailerImages {
+interface MALTrailerImages {
   image_url: string | null;
   small_image_url: string | null;
   medium_image_url: string | null;
@@ -65,37 +83,51 @@ interface TrailerImages {
   maximum_image_url: string | null;
 }
 
-interface Title {
+interface MALTitle {
   type: string;
   title: string;
 }
 
-interface Aired {
+interface MALAired {
   from: string | null;
   to: string | null;
   prop: {
-    from: AiredDate;
-    to: AiredDate;
+    from: MALAiredDate;
+    to: MALAiredDate;
   };
   string: string;
 }
 
-interface AiredDate {
+interface MALAiredDate {
   day: number | null;
   month: number | null;
   year: number | null;
 }
 
-interface Broadcast {
+interface MALBroadcast {
   day: string | null;
   time: string | null;
   timezone: string | null;
   string: string | null;
 }
 
-interface Entity {
+interface MALEntity {
   mal_id: number;
   type: string;
   name: string;
   url: string;
+}
+
+export interface MALEpisode {
+  mal_id: number;
+  url: string | null;
+  title: string;
+  title_japanese: string | null;
+  title_romanji: string | null;
+  aired: string;
+  score: number;
+  filler: boolean;
+  recap: boolean;
+  forum_url: string;
+  synopsis?: string;
 }

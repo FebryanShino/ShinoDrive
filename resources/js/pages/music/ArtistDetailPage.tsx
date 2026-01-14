@@ -2,6 +2,7 @@ import ContentWrapper from "@/components/app/ContentWrapper";
 import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
 import { useMusic } from "@/components/music-context";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Artist } from "@/types/music";
 import { Link, router } from "@inertiajs/react";
@@ -9,6 +10,7 @@ import { useMediaQuery } from "react-responsive";
 
 export default function ArtistDetailPage({ artist }: { artist: Artist }) {
   const { playPlaylist, currentTrack } = useMusic();
+  const isMobile = useIsMobile();
   const isDesktopOrLaptop = useMediaQuery({
     query: "(min-width: 1224px)",
   });
@@ -120,7 +122,10 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
             <h1 className="text-xl text-white font-bold">Albums</h1>
           </CardHeader>
           <CardContent className="p-0">
-            <ResponsiveGridWrapper minSize="10rem" gap="1rem">
+            <ResponsiveGridWrapper
+              minSize={isMobile ? "8rem" : "10rem"}
+              gap={isMobile ? "0.5rem" : "1rem"}
+            >
               {artist.albums.map((album) => (
                 <Link href={route("music.album.show", { album: album.id })}>
                   <Card className="p-0 overflow-hidden gap-1 border-none shadow-none rounded-none bg-transparent">

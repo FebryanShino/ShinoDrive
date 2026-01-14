@@ -60,8 +60,8 @@ export default function MusicSearchPage({
           </TabsList>
           <TabsContent value="album">
             <ResponsiveGridWrapper
-              minSize={isMobile ? "6rem" : "10rem"}
-              gap={isMobile ? "0.3rem" : "1rem"}
+              minSize={isMobile ? "8rem" : "10rem"}
+              gap={isMobile ? "0.5rem" : "1rem"}
             >
               {albums.map((album) => (
                 <Link

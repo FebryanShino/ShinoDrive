@@ -14,7 +14,7 @@ class AnimeController extends Controller
     public function index()
     {
         return Inertia::render('anime/AnimeLandingPage', [
-            'animeList' => AnimeSeries::all()
+            'animeList' => AnimeSeries::orderBy('name', 'asc')->get()
         ]);
     }
 
@@ -41,6 +41,7 @@ class AnimeController extends Controller
         $series = AnimeSeries::where('name', $request->input('title'))->first() ?? AnimeSeries::create([
             'name' => $request->input('title'),
             'mal_id' => $request->input('mal_id'),
+            'cover' => $request->input('cover'),
         ]);
 
         $safe_name = preg_replace('/[\\\\\/:*?"<>|.]/', '', $request->input('title'));
@@ -53,16 +54,31 @@ class AnimeController extends Controller
             AnimeEpisode::create([
                 'number' => $episode['episodeNumber'],
                 'path' => $path,
+                'file_extension' => $file->getClientOriginalExtension(),
                 'anime_series_id' => $series->id
             ]);
         }
     }
 
 
+    public function showEpisode(string $mal_id, string $number)
+    {
+        $episode = AnimeEpisode::with(['series' => fn($series) => $series->with('episodes')])->whereHas('series', function ($q) use ($mal_id) {
+            $q->where('mal_id', $mal_id);
+        })->where('number', $number)->first();
+        if (!$episode) return false;
 
-    public function streamAnime(AnimeEpisode $episode)
+        return Inertia::render('anime/AnimeEpisodeDetailPage', ['episode' => $episode]);
+    }
+
+
+
+    public function streamAnime(string $filename)
     {
         $disk = Storage::disk('anime');
+        $episode = AnimeEpisode::find(
+            explode(".", $filename)[0]
+        );
 
         if (!$disk->exists($episode->path)) {
             abort(404);

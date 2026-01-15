@@ -93,21 +93,34 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setOriginalPlaylist(tracks);
 
     if (isShuffled) {
-      const randomizedTracks = [...tracks].sort(() => Math.random() - 0.5);
+      const randomizedTracks = [
+        track,
+        ...shuffleWithoutCurrentTrack(tracks, track),
+      ];
       setPlaylist(randomizedTracks);
-      setCurrentIndex(randomizedTracks.indexOf(track));
-      audioRef.current.src = `/audio/${randomizedTracks[randomizedTracks.indexOf(track)].id}`;
+      setCurrentIndex(0);
     } else {
       setPlaylist(tracks);
       setCurrentIndex(startIndex);
-      audioRef.current.src = `/audio/${tracks[startIndex].id}`;
     }
+    audioRef.current.src = `/audio/${tracks[startIndex].id}`;
 
     await audioRef.current.play();
   }
 
   function enqueue(track: Track) {
     setQueue((q) => [...q, track]);
+  }
+
+  function shuffleWithoutCurrentTrack(tracks: Track[], current: Track) {
+    const tracksWithoutCurrentTrack = tracks.filter(
+      (track) => track.id != current.id,
+    );
+    const randomizedTracks = [...tracksWithoutCurrentTrack].sort(
+      () => Math.random() - 0.5,
+    );
+
+    return randomizedTracks;
   }
 
   function next() {
@@ -124,6 +137,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       audioRef.current.play();
       return;
     }
+    if (isShuffled && currentIndex + 1 === playlist.length) {
+      console.log("reached the end");
+      const randomizedTracks = shuffleWithoutCurrentTrack(
+        playlist,
+        currentTrack,
+      );
+      setPlaylist(randomizedTracks);
+      setCurrentIndex(0);
+      audioRef.current.src = `/audio/${randomizedTracks[0].id}`;
+      audioRef.current.play();
+      return;
+    }
 
     if (repeatMode === "all") {
       setCurrentIndex(0);
@@ -136,6 +161,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
       audioRef.current.src = `/audio/${playlist[currentIndex - 1].id}`;
+      audioRef.current.play();
+    } else if (isShuffled) {
+      console.log("reached the start");
+      const randomizedTracks = shuffleWithoutCurrentTrack(
+        playlist,
+        currentTrack,
+      );
+      setPlaylist(randomizedTracks);
+      setCurrentIndex(randomizedTracks.length - 1);
+      audioRef.current.src = `/audio/${randomizedTracks[randomizedTracks.length - 1].id}`;
       audioRef.current.play();
     }
   }

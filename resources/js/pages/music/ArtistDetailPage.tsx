@@ -1,14 +1,23 @@
 import ContentWrapper from "@/components/app/ContentWrapper";
 import ResponsiveGridWrapper from "@/components/app/ResponsiveGridWrapper";
+import TrackListItem from "@/components/app/TrackListItem";
 import { useMusic } from "@/components/music-context";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Artist } from "@/types/music";
+import { Album, Artist, Track } from "@/types/music";
 import { Link, router } from "@inertiajs/react";
 import { useMediaQuery } from "react-responsive";
 
-export default function ArtistDetailPage({ artist }: { artist: Artist }) {
+export default function ArtistDetailPage({
+  artist,
+  tracks,
+  albums,
+}: {
+  artist: Artist;
+  tracks: Track[];
+  albums: Album[];
+}) {
   const { playPlaylist, currentTrack } = useMusic();
   const isMobile = useIsMobile();
   const isDesktopOrLaptop = useMediaQuery({
@@ -21,8 +30,8 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
           <div
             className="h-[40%] aspect-square bg-red-400 rounded-full bg-cover"
             style={{
-              backgroundImage: artist.albums[0]?.id
-                ? `url("/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext}")`
+              backgroundImage: albums[0]?.id
+                ? `url("/music/artwork/${albums[0].id}.${albums[0].artwork_ext}")`
                 : "",
             }}
           />
@@ -57,16 +66,14 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                 )}
                 style={{
                   backgroundColor: "black",
-                  backgroundImage: artist.albums[0]?.id
-                    ? `url("/music/artwork/${artist.albums[0].id}.${artist.albums[0].artwork_ext}")`
+                  backgroundImage: albums[0]?.id
+                    ? `url("/music/artwork/${albums[0].id}.${albums[0].artwork_ext}")`
                     : "",
                 }}
               />
               <div className="flex justify-center flex-col text-left text-sm  font-bold">
-                <p className="text-white">{artist.albums[0]?.title}</p>
-                <p className="text-gray-400">
-                  {artist.albums[0]?.tracks_count} songs
-                </p>
+                <p className="text-white">{albums[0]?.title}</p>
+                <p className="text-gray-400">{albums[0]?.tracks_count} songs</p>
               </div>
             </CardContent>
           </Card>
@@ -81,7 +88,7 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
             </CardHeader>
             <CardContent className="p-0">
               <div className="grid grid-rows-3 grid-flow-col auto-cols-[17rem] overflow-x-auto snap-x w-full snap-mandatory gap-0.5 scrollbar-hide">
-                {artist.tracks.map((track, index) => (
+                {tracks.slice(0, 12).map((track, index) => (
                   <div
                     className="truncate snap-start h-14 flex p-1 gap-2"
                     key={track.id}
@@ -95,7 +102,7 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                       className="h-full rounded-sm aspect-square bg-cover"
                       style={{
                         backgroundColor: "black",
-                        backgroundImage: artist.albums[0]?.id
+                        backgroundImage: albums[0]?.id
                           ? `url("/music/artwork/${track.album?.id}.${track.album?.artwork_ext}")`
                           : "",
                       }}
@@ -126,7 +133,7 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
               minSize={isMobile ? "8rem" : "10rem"}
               gap={isMobile ? "0.5rem" : "1rem"}
             >
-              {artist.albums.map((album) => (
+              {albums.map((album) => (
                 <Link href={route("music.album.show", { album: album.id })}>
                   <Card className="p-0 overflow-hidden gap-1 border-none shadow-none rounded-none bg-transparent">
                     <CardHeader className="p-0">
@@ -149,6 +156,25 @@ export default function ArtistDetailPage({ artist }: { artist: Artist }) {
                 </Link>
               ))}
             </ResponsiveGridWrapper>
+          </CardContent>
+        </Card>
+        <Card className="w-full px-3 shadow-none mt-3 bg-gray-900 border-none">
+          <CardHeader className="p-0">
+            <h1 className="text-xl text-white font-bold">Songs</h1>
+          </CardHeader>
+          <CardContent className="p-0">
+            {tracks.map((track, index) => (
+              <TrackListItem
+                iconOnClick={() => playPlaylist(tracks, index)}
+                itemOnClick={() =>
+                  router.visit(
+                    route("music.album.show", { album: track.album_id }),
+                  )
+                }
+                track={track}
+                key={track.id}
+              />
+            ))}
           </CardContent>
         </Card>
       </ContentWrapper>

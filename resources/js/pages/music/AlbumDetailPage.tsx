@@ -97,7 +97,12 @@ export default function AlbumDetailPage(props: { album: Album }) {
                       <div className="h-full aspect-[3/4] flex items-center justify-center">
                         {track.track_number ?? index + 1}
                       </div>
-                      {track.title}
+                      <div>
+                        <p>{track.title}</p>
+                        <span className="text-xs text-gray-400">
+                          {track.artist?.name}
+                        </span>
+                      </div>
                       <div className="ml-auto">
                         {convertSecondsToTimeString(track.duration)}
                       </div>

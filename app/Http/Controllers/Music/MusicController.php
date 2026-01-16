@@ -54,14 +54,22 @@ class MusicController extends Controller
 
     public function showArtist(Artist $artist)
     {
+        $tracks = Track::with(['artist', 'album'])->whereHas('artist', function ($q) use ($artist) {
+            $q->where('name', 'like', '%' . $artist->name . '%');
+        })->orWhereHas('album', function ($q) use ($artist) {
+            $q->where('title', 'like', '%' . $artist->name . '%');
+        })->orderBy('title', 'asc')->get();
+
+        $albums = Album::withCount('tracks')->whereHas('artist', function ($q) use ($artist) {
+            $q->where('name', 'like', '%' . $artist->name . '%');
+        })->orWhereHas('tracks', function ($q) use ($artist) {
+            $q->where('artist_id', $artist->id);
+        })->orderBy('title', 'asc')->get();
 
         return Inertia::render('music/ArtistDetailPage', [
-            'artist' => $artist->load(
-                [
-                    'tracks' => fn($tracks) => $tracks->with(['artist', 'album']),
-                    'albums' => fn($album) => $album->withCount('tracks')
-                ]
-            )
+            'artist' => $artist,
+            'albums' => $albums,
+            'tracks' => $tracks
         ]);
     }
 
